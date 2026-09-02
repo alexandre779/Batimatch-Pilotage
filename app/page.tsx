@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { getDashboardData, type DashboardPeriod, type LeaderboardEntry } from "@/lib/services/dashboard";
 import { getPilotageAccess } from "@/lib/auth/access";
@@ -6,6 +7,7 @@ import { DashboardFilters } from "@/app/components/dashboard-filters";
 import { TrendChart } from "@/app/components/trend-chart";
 import { MaturityChart } from "@/app/components/maturity-chart";
 import { NetworkPilotage } from "@/app/components/network-pilotage";
+import { GroupDetail } from "@/app/components/group-detail";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
@@ -123,6 +125,8 @@ export default async function Home({ searchParams }: PageProps) {
     ? formatDateRange(startDate, endDate)
     : PERIODS.find((p) => p.value === period)?.label ?? "30 derniers jours";
   const scopeLabel = data?.selectedGroupName ?? "Réseau national";
+  const selectedGroup = groupId === "all" ? null : groups.find((group) => group.id === groupId) ?? null;
+  const groupHref = (id: string) => `/?group=${encodeURIComponent(id)}&period=${encodeURIComponent(period)}${period === "custom" ? `&start=${startDate}&end=${endDate}` : ""}#fiche-groupe`;
 
   return (
     <main className="dashboard">
@@ -155,6 +159,8 @@ export default async function Home({ searchParams }: PageProps) {
           startDate={startDate}
           endDate={endDate}
         />
+
+        {access.role === "network" && <div className="networkToolbar"><Link href="/rapport">Consulter le rapport mensuel</Link></div>}
 
         {dataError && (
         <section className="notice">
@@ -225,6 +231,8 @@ export default async function Home({ searchParams }: PageProps) {
 
         {access.role === "network" && data && <NetworkPilotage data={data} />}
 
+        {access.role === "network" && data && selectedGroup && <GroupDetail group={selectedGroup} data={data} />}
+
         {access.role === "president" && data && (
           <section className="sectionBlock">
             <div className="sectionHeading">
@@ -280,7 +288,7 @@ export default async function Home({ searchParams }: PageProps) {
             <tbody>
               {visibleGroups.map((group) => (
                 <tr key={group.id}>
-                  <td><strong>{group.name || "Sans nom"}</strong></td>
+                  <td>{access.role === "network" ? <Link className="groupTableLink" href={groupHref(group.id)}>{group.name || "Sans nom"}</Link> : <strong>{group.name || "Sans nom"}</strong>}</td>
                   <td>{number.format(group.memberCount)}</td>
                   <td>{number.format(group.opportunitiesSent)}</td>
                   <td>{number.format(group.opportunitiesReceived)}</td>
