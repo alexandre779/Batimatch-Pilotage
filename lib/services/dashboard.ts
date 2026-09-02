@@ -23,6 +23,7 @@ export type DashboardKpis = {
   opportunitiesSent: number;
   opportunitiesReceived: number;
   opportunitiesWon: number;
+  declinedOpportunities: number;
   revenueWon: number;
   receivedVolume: number;
   pipelineValue: number;
@@ -129,6 +130,7 @@ export async function getDashboardData(
       opportunitiesSent: sent.length,
       opportunitiesReceived: received.length,
       opportunitiesWon: won.length,
+      declinedOpportunities: declined.length,
       revenueWon,
       receivedVolume,
       pipelineValue,
@@ -145,7 +147,7 @@ export async function getDashboardData(
       opportunitiesSent: kpis.opportunitiesSent,
       opportunitiesReceived: kpis.opportunitiesReceived,
       wonOpportunities: kpis.opportunitiesWon,
-      declinedOpportunities: Math.max(kpis.opportunitiesReceived - (kpis.conversionRate ? Math.round(kpis.opportunitiesWon / kpis.conversionRate) : kpis.opportunitiesReceived), 0),
+      declinedOpportunities: kpis.declinedOpportunities,
       conversionRate: kpis.conversionRate,
       revenueWon: kpis.revenueWon,
       receivedVolume: kpis.receivedVolume,
