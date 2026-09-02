@@ -227,7 +227,7 @@ export default async function Home({ searchParams }: PageProps) {
           {access.role === "president" && <Link className="meetingModeLink" href={presentationHref}>Présenter en réunion</Link>}
         </nav>
 
-        {access.role === "network" && <div className="networkToolbar"><Link className="networkPresentationLink" href={`/presentation?group=all&period=${encodeURIComponent(period === "custom" ? "30d" : period)}`}>Présenter le réseau</Link><Link href="/rapport">Consulter le rapport mensuel</Link></div>}
+        {access.role === "network" && <div className="networkToolbar"><Link className="networkPresentationLink" href={`/presentation?group=all&period=${encodeURIComponent(period === "custom" ? "30d" : period)}`}>Présenter le réseau</Link><Link href="/rapport">Rapport mensuel</Link><Link href="/finances">Finances</Link></div>}
 
         {dataError && (
         <section className="notice">

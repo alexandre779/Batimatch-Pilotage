@@ -76,6 +76,16 @@ export const FIELDS = {
     quoteAmountHT: "fldoKSNqwyYUswpp0",
     quoteAmountTTC: "fld6MLilV9k210Fyf",
     contribution: "fldc1D4YM68W1pl9j",
-    commission: "fldGQF29QR80K2ucj"
+    commission: "fldGQF29QR80K2ucj",
+    dueAt: "fld2NzaPxskB2BvF6",
+    contributionStatus: "fldrc7DGJEE9eY0NX",
+    commissionStatus: "fldr2Wv767plnuUqa",
+    receiverGroup: "fldD7UBCJtmKaFGpM"
+  },
+  memberships: {
+    group: "fldPJY2LPXmfPlQM5",
+    signedAt: "fldpnh3lQWNAI4Wws",
+    signatureStatus: "fldF7lPIKuJGB6KwJ",
+    amount: "fldlfc3OFFwWcE54X"
   }
 } as const;
