@@ -9,6 +9,7 @@ import { MaturityChart } from "@/app/components/maturity-chart";
 import { NetworkPilotage } from "@/app/components/network-pilotage";
 import { GroupDetail } from "@/app/components/group-detail";
 import { PresidentCoach } from "@/app/components/president-coach";
+import { GroupBalance } from "@/app/components/group-balance";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
@@ -193,6 +194,8 @@ export default async function Home({ searchParams }: PageProps) {
         )}
 
         {access.role === "president" && data && <PresidentCoach actions={data.presidentCoach} />}
+
+        {access.role === "president" && data?.groupBalance && <GroupBalance balance={data.groupBalance} />}
 
         <section className="sectionBlock">
           <div className="sectionHeading">

@@ -123,6 +123,29 @@ export type PresidentCoachAction = {
   items: string[];
 };
 
+export type MemberBalance = {
+  id: string;
+  name: string;
+  sentCount: number;
+  sentAmount: number;
+  receivedCount: number;
+  receivedAmount: number;
+  lastSentDays: number | null;
+  lastReceivedDays: number | null;
+  quadrant: "motor" | "giver" | "receiver" | "inactive";
+};
+
+export type GroupBalance = {
+  score: number;
+  label: "Équilibre solide" | "Participation concentrée" | "Échanges déséquilibrés" | "Mobilisation nécessaire";
+  giverParticipation: number;
+  receiverParticipation: number;
+  sentReceivedRatio: number | null;
+  topThreeShare: number;
+  members: MemberBalance[];
+  recommendations: string[];
+};
+
 export type DashboardData = {
   groups: GroupPerformance[];
   kpis: DashboardKpis;
@@ -151,6 +174,7 @@ export type DashboardData = {
   forecast: NetworkForecast;
   groupObjectives: GroupObjective[];
   presidentCoach: PresidentCoachAction[];
+  groupBalance: GroupBalance | null;
   selectedGroupName: string | null;
 };
 
@@ -607,6 +631,64 @@ export async function getDashboardData(
     }
   }
 
+  let groupBalance: GroupBalance | null = null;
+  if (validSelectedGroupId) {
+    const groupMembers = users.filter((user) => activeUserIds.has(user.id) && asIds(user.fields[uf.groupLinks]).includes(validSelectedGroupId));
+    const memberMetrics = groupMembers.map((user) => {
+      const sent = filteredOpportunities.filter((opportunity) => firstId(opportunity.fields[of.giver]) === user.id);
+      const received = filteredOpportunities.filter((opportunity) => firstId(opportunity.fields[of.receiver]) === user.id);
+      const allSentDates = opportunities.filter((opportunity) => firstId(opportunity.fields[of.giver]) === user.id).map((opportunity) => recordDate(opportunity.fields[of.createdAt])).filter((date): date is Date => Boolean(date));
+      const allReceivedDates = opportunities.filter((opportunity) => firstId(opportunity.fields[of.receiver]) === user.id).map((opportunity) => recordDate(opportunity.fields[of.createdAt])).filter((date): date is Date => Boolean(date));
+      const sentAmount = sent.reduce((sum, opportunity) => sum + asNumber(opportunity.fields[of.opportunityAmount]), 0);
+      const receivedAmount = received.reduce((sum, opportunity) => sum + asNumber(opportunity.fields[of.opportunityAmount]), 0);
+      const latestDays = (dates: Date[]) => dates.length ? Math.max(0, Math.floor((now.getTime() - Math.max(...dates.map((date) => date.getTime()))) / dayMs)) : null;
+      return {
+        id: user.id,
+        name: userNames.get(user.id) ?? "Adhérent sans nom",
+        sentCount: sent.length,
+        sentAmount,
+        receivedCount: received.length,
+        receivedAmount,
+        lastSentDays: latestDays(allSentDates),
+        lastReceivedDays: latestDays(allReceivedDates),
+        sentWeight: sentAmount || sent.length,
+        receivedWeight: receivedAmount || received.length
+      };
+    });
+    const memberCount = memberMetrics.length;
+    const averageSent = memberCount ? memberMetrics.reduce((sum, member) => sum + member.sentWeight, 0) / memberCount : 0;
+    const averageReceived = memberCount ? memberMetrics.reduce((sum, member) => sum + member.receivedWeight, 0) / memberCount : 0;
+    const members: MemberBalance[] = memberMetrics.map((member) => {
+      const givesHigh = member.sentWeight > 0 && member.sentWeight >= averageSent;
+      const receivesHigh = member.receivedWeight > 0 && member.receivedWeight >= averageReceived;
+      const quadrant: MemberBalance["quadrant"] = givesHigh && receivesHigh ? "motor" : givesHigh ? "giver" : receivesHigh ? "receiver" : "inactive";
+      return { ...member, quadrant };
+    });
+    const giverParticipation = memberCount ? members.filter((member) => member.sentCount > 0).length / memberCount : 0;
+    const receiverParticipation = memberCount ? members.filter((member) => member.receivedCount > 0).length / memberCount : 0;
+    const totalSentAmount = members.reduce((sum, member) => sum + member.sentAmount, 0);
+    const totalReceivedAmount = members.reduce((sum, member) => sum + member.receivedAmount, 0);
+    const totalSentMeasure = totalSentAmount || members.reduce((sum, member) => sum + member.sentCount, 0);
+    const totalReceivedMeasure = totalReceivedAmount || members.reduce((sum, member) => sum + member.receivedCount, 0);
+    const sentReceivedRatio = totalReceivedMeasure > 0 ? totalSentMeasure / totalReceivedMeasure : totalSentMeasure > 0 ? null : 1;
+    const contributionValues = members.map((member) => totalSentAmount ? member.sentAmount : member.sentCount).sort((a, b) => b - a);
+    const totalContribution = contributionValues.reduce((sum, value) => sum + value, 0);
+    const topThreeShare = totalContribution ? contributionValues.slice(0, 3).reduce((sum, value) => sum + value, 0) / totalContribution : 0;
+    const reciprocity = sentReceivedRatio === null ? 0 : Math.min(sentReceivedRatio, 1 / Math.max(sentReceivedRatio, 0.0001));
+    const concentration = Math.max(0, 1 - Math.max(0, topThreeShare - 0.4) / 0.6);
+    const score = Math.round(Math.max(0, Math.min(100, ((giverParticipation + receiverParticipation) / 2) * 40 + reciprocity * 30 + concentration * 30)));
+    const label: GroupBalance["label"] = score >= 75 ? "Équilibre solide" : score >= 55 ? "Participation concentrée" : score >= 35 ? "Échanges déséquilibrés" : "Mobilisation nécessaire";
+    const recommendations: string[] = [];
+    const giver = [...members].filter((member) => member.quadrant === "giver").sort((a, b) => b.sentAmount - a.sentAmount || b.sentCount - a.sentCount)[0];
+    const receiver = [...members].filter((member) => member.quadrant === "receiver").sort((a, b) => b.receivedAmount - a.receivedAmount || b.receivedCount - a.receivedCount)[0];
+    const inactive = [...members].filter((member) => member.quadrant === "inactive").sort((a, b) => (b.lastSentDays ?? 9999) - (a.lastSentDays ?? 9999))[0];
+    if (giver) recommendations.push(`Valoriser ${giver.name}, qui contribue fortement et reçoit encore peu sur la période.`);
+    if (receiver) recommendations.push(`Travailler la réciprocité avec ${receiver.name}, qui reçoit davantage qu’il ne transmet actuellement.`);
+    if (inactive) recommendations.push(`Remobiliser ${inactive.name}, encore en retrait dans les échanges de la période.`);
+    if (!recommendations.length) recommendations.push("Entretenir cette dynamique en valorisant publiquement les échanges croisés du groupe.");
+    groupBalance = { score, label, giverParticipation, receiverParticipation, sentReceivedRatio, topThreeShare, members, recommendations: recommendations.slice(0, 3) };
+  }
+
   const maturityReferenceDate = new Date();
   const maturitySeries: MaturitySeries[] = groupRecords.flatMap((group) => {
     const openedAt = recordDate(group.fields[gf.createdAt]);
@@ -782,6 +864,7 @@ export async function getDashboardData(
     forecast: { days30, days60, days90, pipeline: forecastPipeline },
     groupObjectives,
     presidentCoach: presidentCoach.slice(0, 3),
+    groupBalance,
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }
