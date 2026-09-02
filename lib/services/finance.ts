@@ -20,6 +20,7 @@ export type FinanceData = {
   membershipCount: number;
   contributions: number;
   contributionsPaid: number;
+  contributionsToInvoice: number;
   commissions: number;
   commissionsPaid: number;
   overdueContributions: number;
@@ -44,8 +45,10 @@ function date(value: unknown) {
   return Number.isFinite(parsed.getTime()) ? parsed : null;
 }
 
-function inMonth(value: unknown, month: string) {
-  return typeof value === "string" && value.slice(0, 7) === month;
+function inRange(value: unknown, start: Date | null, end: Date | null) {
+  if (!start) return true;
+  const parsed = date(value);
+  return Boolean(parsed && parsed >= start && (!end || parsed < end));
 }
 
 function isPaid(value: unknown) {
@@ -65,7 +68,7 @@ function linkedGroup(value: unknown) {
   return item?.id && item.name ? { id: item.id, name: item.name } : null;
 }
 
-export async function getFinanceData(month: string): Promise<FinanceData> {
+export async function getFinanceData(range: { start: Date | null; end: Date | null }): Promise<FinanceData> {
   const mf = FIELDS.memberships;
   const of = FIELDS.opportunities;
   const [memberships, opportunities] = await Promise.all([
@@ -83,7 +86,7 @@ export async function getFinanceData(month: string): Promise<FinanceData> {
   let membershipTotal = 0;
   let membershipCount = 0;
   for (const record of memberships) {
-    if (!/^sign[eé]$/i.test(text(record.fields[mf.signatureStatus] as SelectValue)) || !inMonth(record.fields[mf.signedAt], month)) continue;
+    if (!/^sign[eé]$/i.test(text(record.fields[mf.signatureStatus] as SelectValue)) || !inRange(record.fields[mf.signedAt], range.start, range.end)) continue;
     const value = amount(record.fields[mf.amount]);
     membershipTotal += value;
     membershipCount += 1;
@@ -92,11 +95,11 @@ export async function getFinanceData(month: string): Promise<FinanceData> {
     row.membershipCount += 1;
   }
 
-  let contributions = 0, contributionsPaid = 0, commissions = 0, commissionsPaid = 0;
+  let contributions = 0, contributionsPaid = 0, contributionsToInvoice = 0, commissions = 0, commissionsPaid = 0;
   let overdueContributions = 0, overdueContributionCount = 0, overdueCommissions = 0, overdueCommissionCount = 0;
   const now = new Date();
   for (const record of opportunities) {
-    if (!/^gagn[eé]e?$/i.test(text(record.fields[of.stage] as SelectValue)) || !inMonth(record.fields[of.dueAt], month)) continue;
+    if (!/^gagn[eé]e?$/i.test(text(record.fields[of.stage] as SelectValue)) || !inRange(record.fields[of.signedAt], range.start, range.end)) continue;
     const contribution = amount(record.fields[of.contribution]);
     const commission = amount(record.fields[of.commission]);
     const contributionPaid = isPaid(record.fields[of.contributionStatus]);
@@ -106,6 +109,7 @@ export async function getFinanceData(month: string): Promise<FinanceData> {
     contributions += contribution;
     commissions += commission;
     if (contributionPaid) contributionsPaid += contribution;
+    else if (/facturer/i.test(text(record.fields[of.contributionStatus] as SelectValue))) contributionsToInvoice += contribution;
     else if (overdue && contribution) { overdueContributions += contribution; overdueContributionCount += 1; }
     if (commissionPaid) commissionsPaid += commission;
     else if (overdue && commission) { overdueCommissions += commission; overdueCommissionCount += 1; }
@@ -116,5 +120,5 @@ export async function getFinanceData(month: string): Promise<FinanceData> {
     if (commissionPaid) row.commissionsPaid += commission;
   }
 
-  return { memberships: membershipTotal, membershipCount, contributions, contributionsPaid, commissions, commissionsPaid, overdueContributions, overdueContributionCount, overdueCommissions, overdueCommissionCount, groups: [...groupMap.values()].sort((a, b) => b.contributions - a.contributions) };
+  return { memberships: membershipTotal, membershipCount, contributions, contributionsPaid, contributionsToInvoice, commissions, commissionsPaid, overdueContributions, overdueContributionCount, overdueCommissions, overdueCommissionCount, groups: [...groupMap.values()].sort((a, b) => b.contributions - a.contributions) };
 }

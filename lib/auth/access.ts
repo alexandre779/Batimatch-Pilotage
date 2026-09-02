@@ -68,12 +68,12 @@ const selectName = (value: unknown) => typeof value === "string"
   : value && typeof value === "object" && "name" in value && typeof value.name === "string" ? value.name : "";
 
 function inferFirstName(firstName: unknown, displayName: unknown, email: string) {
-  if (typeof firstName === "string" && firstName.trim()) return firstName.trim();
   if (typeof displayName === "string") {
     const tokens = displayName.trim().split(/\s+/).filter(Boolean);
     const naturallyCased = tokens.find((token) => token !== token.toLocaleUpperCase("fr-FR"));
     if (naturallyCased) return naturallyCased;
   }
+  if (typeof firstName === "string" && firstName.trim()) return firstName.trim();
   const emailName = email.split("@")[0]?.split(/[._-]/).find(Boolean);
   return emailName ? `${emailName.charAt(0).toLocaleUpperCase("fr-FR")}${emailName.slice(1).toLocaleLowerCase("fr-FR")}` : null;
 }
