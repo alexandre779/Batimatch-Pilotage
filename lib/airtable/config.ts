@@ -54,7 +54,11 @@ export const FIELDS = {
     createdAt: "fldqi6kDDqWZO2PaY",
     city: "fldtS1NkChyJOj7X6",
     department: "fldn4d6hZQcAhH5nI",
-    region: "fldrAfKgnFsBtprGI"
+    region: "fldrAfKgnFsBtprGI",
+    monthlyRevenueTarget: "fldeeng9aRxqqy7ST",
+    monthlyOpportunityTarget: "fldeG2GEQ0soalcrn",
+    monthlySentVolumeTarget: "fldEuJ2aDUZ6w8vVI",
+    annualNewMemberTarget: "fldVWrJEYxHu0iei0"
   },
   opportunities: {
     reference: "fldqzDqQNR339WYb1",

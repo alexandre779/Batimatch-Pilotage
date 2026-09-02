@@ -5,6 +5,7 @@ import { getPilotageAccess } from "@/lib/auth/access";
 import { DashboardFilters } from "@/app/components/dashboard-filters";
 import { TrendChart } from "@/app/components/trend-chart";
 import { MaturityChart } from "@/app/components/maturity-chart";
+import { NetworkPilotage } from "@/app/components/network-pilotage";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
@@ -221,6 +222,8 @@ export default async function Home({ searchParams }: PageProps) {
         </section>}
 
         {access.role === "network" && data && <MaturityChart series={data.maturitySeries} />}
+
+        {access.role === "network" && data && <NetworkPilotage data={data} />}
 
         {access.role === "president" && data && (
           <section className="sectionBlock">

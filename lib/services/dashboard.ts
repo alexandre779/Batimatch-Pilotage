@@ -71,6 +71,48 @@ export type MaturitySeries = {
   points: MaturityPoint[];
 };
 
+export type NetworkHealth = {
+  id: string;
+  name: string;
+  status: "healthy" | "watch" | "alert";
+  score: number;
+  activeMembers: number;
+  pendingTreatment: number;
+  overdueTreatment: number;
+  daysSinceLastOpportunity: number | null;
+  opportunitiesInPeriod: number;
+  revenueWon: number;
+};
+
+export type NetworkAlert = {
+  id: string;
+  level: "warning" | "critical";
+  groupName: string;
+  message: string;
+};
+
+export type FunnelStep = {
+  stage: string;
+  count: number;
+  conversion: number | null;
+};
+
+export type NetworkForecast = {
+  days30: number;
+  days60: number;
+  days90: number;
+  pipeline: number;
+};
+
+export type GroupObjective = {
+  id: string;
+  name: string;
+  monthlyRevenue: { actual: number; target: number };
+  monthlyOpportunities: { actual: number; target: number };
+  monthlySentVolume: { actual: number; target: number };
+  annualNewMembers: { actual: number; target: number };
+};
+
 export type DashboardData = {
   groups: GroupPerformance[];
   kpis: DashboardKpis;
@@ -93,6 +135,11 @@ export type DashboardData = {
   maturitySeries: MaturitySeries[];
   pendingTreatmentByMember: Array<{ id: string; name: string; count: number }>;
   pendingTreatmentByGroup: Array<{ id: string; name: string; count: number }>;
+  networkHealth: NetworkHealth[];
+  networkAlerts: NetworkAlert[];
+  funnel: FunnelStep[];
+  forecast: NetworkForecast;
+  groupObjectives: GroupObjective[];
   selectedGroupName: string | null;
 };
 
@@ -168,7 +215,10 @@ export async function getDashboardData(
 
   const [users, groupRecords, opportunities, guests] = await Promise.all([
     listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.userType, uf.groupLinks, uf.testStartDate, uf.createdAt]),
-    listRecords(TABLES.groups, [gf.name, gf.members, gf.createdAt]),
+    listRecords(TABLES.groups, [
+      gf.name, gf.members, gf.createdAt, gf.monthlyRevenueTarget,
+      gf.monthlyOpportunityTarget, gf.monthlySentVolumeTarget, gf.annualNewMemberTarget
+    ]),
     listRecords(TABLES.opportunities, [
       of.giver,
       of.receiver,
@@ -327,6 +377,147 @@ export async function getDashboardData(
     current.count += 1;
     pendingByMember.set(receiverId, current);
   }
+
+  const now = new Date();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const networkHealth: NetworkHealth[] = groupRecords.map((group) => {
+    const groupId = group.id;
+    const groupOpportunities = opportunities.filter((opportunity) =>
+      opportunityGroup(opportunity, "giver") === groupId || opportunityGroup(opportunity, "receiver") === groupId
+    );
+    const receivedPending = opportunities.filter((opportunity) =>
+      opportunityGroup(opportunity, "receiver") === groupId &&
+      asString(opportunity.fields[of.stage]) === PENDING_TREATMENT_STAGE
+    );
+    const overdueTreatment = receivedPending.filter((opportunity) => {
+      const createdAt = recordDate(opportunity.fields[of.createdAt]);
+      return Boolean(createdAt && now.getTime() - createdAt.getTime() > 7 * dayMs);
+    }).length;
+    const lastActivity = groupOpportunities
+      .map((opportunity) => recordDate(opportunity.fields[of.createdAt]))
+      .filter((date): date is Date => Boolean(date))
+      .sort((a, b) => b.getTime() - a.getTime())[0];
+    const daysSinceLastOpportunity = lastActivity
+      ? Math.max(0, Math.floor((now.getTime() - lastActivity.getTime()) / dayMs))
+      : null;
+    const activeMembers = users.filter((user) =>
+      activeUserIds.has(user.id) && asIds(user.fields[uf.groupLinks]).includes(groupId)
+    ).length;
+    const periodKpis = compute(filteredOpportunities, closedOpportunities, quotedOpportunities, groupId);
+    const inactive = daysSinceLastOpportunity === null || daysSinceLastOpportunity > 30;
+    const status: NetworkHealth["status"] = overdueTreatment > 0 || inactive
+      ? "alert"
+      : receivedPending.length > 0 || (daysSinceLastOpportunity ?? 0) > 14
+        ? "watch"
+        : "healthy";
+    const score = Math.max(0, 100
+      - Math.min(45, overdueTreatment * 15)
+      - Math.min(20, Math.max(0, receivedPending.length - overdueTreatment) * 5)
+      - (inactive ? 35 : (daysSinceLastOpportunity ?? 0) > 14 ? 15 : 0));
+    return {
+      id: groupId,
+      name: groupNames.get(groupId) || "Groupe sans nom",
+      status,
+      score,
+      activeMembers,
+      pendingTreatment: receivedPending.length,
+      overdueTreatment,
+      daysSinceLastOpportunity,
+      opportunitiesInPeriod: periodKpis.opportunitiesReceived,
+      revenueWon: periodKpis.revenueWon
+    };
+  }).sort((a, b) => a.score - b.score || a.name.localeCompare(b.name, "fr"));
+
+  const networkAlerts: NetworkAlert[] = networkHealth.flatMap((group) => {
+    const alerts: NetworkAlert[] = [];
+    if (group.overdueTreatment > 0) alerts.push({
+      id: `${group.id}-overdue`, level: "critical", groupName: group.name,
+      message: `${group.overdueTreatment} affaire${group.overdueTreatment > 1 ? "s" : ""} sans traitement depuis plus de 7 jours`
+    });
+    const recentPending = group.pendingTreatment - group.overdueTreatment;
+    if (recentPending > 0) alerts.push({
+      id: `${group.id}-pending`, level: "warning", groupName: group.name,
+      message: `${recentPending} affaire${recentPending > 1 ? "s" : ""} en attente de prise en charge`
+    });
+    if (group.daysSinceLastOpportunity === null || group.daysSinceLastOpportunity > 30) alerts.push({
+      id: `${group.id}-inactive`, level: "critical", groupName: group.name,
+      message: group.daysSinceLastOpportunity === null
+        ? "Aucune opportunité enregistrée"
+        : `Aucune nouvelle opportunité depuis ${group.daysSinceLastOpportunity} jours`
+    });
+    return alerts;
+  });
+
+  const funnelStages = ["A traiter", "Nouvelle", "RDV calé", "RDV fait", "Devis remis", "Gagnée"];
+  const funnelCounts = funnelStages.map(() => 0);
+  for (const opportunity of filteredOpportunities) {
+    if (validSelectedGroupId && opportunityGroup(opportunity, "receiver") !== validSelectedGroupId) continue;
+    const rawStage = asString(opportunity.fields[of.stage]);
+    const stage = rawStage === "Gagnée sous condition" ? "Gagnée" : rawStage;
+    const stageIndex = funnelStages.indexOf(stage);
+    if (stageIndex < 0) continue;
+    for (let index = 0; index <= stageIndex; index += 1) funnelCounts[index] += 1;
+  }
+  const funnel: FunnelStep[] = funnelStages.map((stage, index) => ({
+    stage,
+    count: funnelCounts[index],
+    conversion: index === 0 || !funnelCounts[index - 1] ? null : funnelCounts[index] / funnelCounts[index - 1]
+  }));
+
+  const forecastWeights: Record<string, { weight: number; horizon: 30 | 60 | 90 }> = {
+    "A traiter": { weight: 0.1, horizon: 90 },
+    "Nouvelle": { weight: 0.15, horizon: 90 },
+    "RDV calé": { weight: 0.3, horizon: 90 },
+    "RDV fait": { weight: 0.45, horizon: 60 },
+    "Devis remis": { weight: 0.7, horizon: 30 },
+    "Gagnée sous condition": { weight: 0.85, horizon: 30 },
+    "Reportée": { weight: 0.2, horizon: 90 }
+  };
+  let days30 = 0;
+  let days60 = 0;
+  let days90 = 0;
+  let forecastPipeline = 0;
+  for (const opportunity of opportunities) {
+    if (validSelectedGroupId && opportunityGroup(opportunity, "receiver") !== validSelectedGroupId) continue;
+    const stage = asString(opportunity.fields[of.stage]);
+    const config = forecastWeights[stage];
+    if (!config) continue;
+    const amount = asNumber(opportunity.fields[of.quoteAmountHT]) || asNumber(opportunity.fields[of.opportunityAmount]);
+    const weighted = amount * config.weight;
+    forecastPipeline += amount;
+    days90 += weighted;
+    if (config.horizon <= 60) days60 += weighted;
+    if (config.horizon <= 30) days30 += weighted;
+  }
+
+  const last30Start = new Date(now.getTime() - 30 * dayMs);
+  const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  const last30Activity = opportunities.filter((opportunity) =>
+    isInPeriod(opportunity.fields[of.createdAt], last30Start, now)
+  );
+  const last30Outcomes = opportunities.filter((opportunity) =>
+    isInPeriod(opportunity.fields[of.closedAt], last30Start, now)
+  );
+  const groupObjectives: GroupObjective[] = groupRecords.map((group) => {
+    const groupId = group.id;
+    const monthlyKpis = compute(last30Activity, last30Outcomes, [], groupId, false);
+    const monthlySentVolume = last30Activity
+      .filter((opportunity) => opportunityGroup(opportunity, "giver") === groupId)
+      .reduce((sum, opportunity) => sum + asNumber(opportunity.fields[of.opportunityAmount]), 0);
+    const annualNewMembers = users.filter((user) =>
+      asString(user.fields[uf.userType]) === "Adhérent" &&
+      asIds(user.fields[uf.groupLinks]).includes(groupId) &&
+      isInPeriod(user.fields[uf.createdAt], yearStart, now)
+    ).length;
+    return {
+      id: groupId,
+      name: groupNames.get(groupId) || "Groupe sans nom",
+      monthlyRevenue: { actual: monthlyKpis.revenueWon, target: asNumber(group.fields[gf.monthlyRevenueTarget]) },
+      monthlyOpportunities: { actual: monthlyKpis.opportunitiesReceived, target: asNumber(group.fields[gf.monthlyOpportunityTarget]) },
+      monthlySentVolume: { actual: monthlySentVolume, target: asNumber(group.fields[gf.monthlySentVolumeTarget]) },
+      annualNewMembers: { actual: annualNewMembers, target: asNumber(group.fields[gf.annualNewMemberTarget]) }
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
   const maturityReferenceDate = new Date();
   const maturitySeries: MaturitySeries[] = groupRecords.flatMap((group) => {
@@ -497,6 +688,11 @@ export async function getDashboardData(
     maturitySeries,
     pendingTreatmentByMember: [...pendingByMember.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr")),
     pendingTreatmentByGroup: [...pendingByGroup.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr")),
+    networkHealth,
+    networkAlerts,
+    funnel,
+    forecast: { days30, days60, days90, pipeline: forecastPipeline },
+    groupObjectives,
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }
