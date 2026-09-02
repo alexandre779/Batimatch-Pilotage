@@ -1,5 +1,7 @@
 import Image from "next/image";
+import { headers } from "next/headers";
 import { getDashboardData, type DashboardPeriod } from "@/lib/services/dashboard";
+import { getPilotageAccess } from "@/lib/auth/access";
 import { DashboardFilters } from "@/app/components/dashboard-filters";
 import { TrendChart } from "@/app/components/trend-chart";
 
@@ -49,7 +51,16 @@ function scalar(value: string | string[] | undefined, fallback: string) {
 
 export default async function Home({ searchParams }: PageProps) {
   const params = await searchParams;
-  const groupId = scalar(params.group, "all");
+  const requestHeaders = await headers();
+  let access: Awaited<ReturnType<typeof getPilotageAccess>>;
+  try {
+    access = await getPilotageAccess(requestHeaders.get("cf-access-jwt-assertion"));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Accès non autorisé";
+    return <main className="accessDenied"><section><Image src="/brand/batimatch-mark.png" alt="" width={64} height={64} /><h1>Accès non autorisé</h1><p>{message}</p></section></main>;
+  }
+  const requestedGroupId = scalar(params.group, "all");
+  const groupId = access.role === "president" ? access.groupId ?? "all" : requestedGroupId;
   const rawPeriod = scalar(params.period, "30d");
   const period: DashboardPeriod = PERIODS.some((p) => p.value === rawPeriod)
     ? (rawPeriod as DashboardPeriod)
@@ -102,6 +113,7 @@ export default async function Home({ searchParams }: PageProps) {
           selectedGroupId={groupId}
           selectedPeriod={period}
           selectedGroupName={scopeLabel}
+          canSelectGroup={access.role === "network"}
           startDate={startDate}
           endDate={endDate}
         />

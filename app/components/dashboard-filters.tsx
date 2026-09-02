@@ -12,6 +12,7 @@ export function DashboardFilters({
   selectedGroupId,
   selectedPeriod,
   selectedGroupName,
+  canSelectGroup,
   startDate,
   endDate
 }: {
@@ -20,6 +21,7 @@ export function DashboardFilters({
   selectedGroupId: string;
   selectedPeriod: DashboardPeriod;
   selectedGroupName: string;
+  canSelectGroup: boolean;
   startDate: string;
   endDate: string;
 }) {
@@ -32,13 +34,13 @@ export function DashboardFilters({
         <span>Vue affichée</span>
         <strong>{selectedGroupName}</strong>
       </div>
-      <label className="filterField">
+      {canSelectGroup ? <label className="filterField">
         <span>Groupe</span>
         <select aria-label="Groupe" name="group" defaultValue={selectedGroupId}>
           <option value="all">Tous les groupes</option>
           {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
         </select>
-      </label>
+      </label> : <input type="hidden" name="group" value={selectedGroupId} />}
       <label className="filterField">
         <span>Période</span>
         <select aria-label="Période" name="period" value={period} onChange={(event) => setPeriod(event.target.value as DashboardPeriod)}>

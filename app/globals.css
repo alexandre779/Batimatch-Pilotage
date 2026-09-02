@@ -10,6 +10,10 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: Roboto, Arial, sans-serif; }
+.accessDenied { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: var(--dark); }
+.accessDenied section { max-width: 460px; padding: 42px; text-align: center; background: white; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.accessDenied h1 { margin: 18px 0 8px; color: var(--dark); }
+.accessDenied p { margin: 0; color: var(--muted); }
 .dashboard { min-height: 100vh; }
 .hero { background: var(--dark); color: white; overflow: hidden; }
 .brandbar { max-width: 1440px; margin: 0 auto; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,.14); }
