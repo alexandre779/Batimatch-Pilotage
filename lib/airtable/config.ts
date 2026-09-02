@@ -1,4 +1,4 @@
-export const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID ?? "appfHlDc9F79EB56n";
+export const AIRTABLE_BASE_ID = "appfHlDc9F79EB56n";
 
 export const TABLES = {
   users: "tbl01JNaBDfgkQiKB",
