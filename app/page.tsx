@@ -140,6 +140,7 @@ export default async function Home({ searchParams }: PageProps) {
   const firstName = access.name?.split(/[\s-]+/).find(Boolean) ?? null;
   const heroTitle = access.role === "president" ? `Bonjour${firstName ? ` ${firstName}` : ""} 👋` : `Bonjour${firstName ? ` ${firstName}` : ""}`;
   const groupHref = (id: string) => `/?group=${encodeURIComponent(id)}&period=${encodeURIComponent(period)}${period === "custom" ? `&start=${startDate}&end=${endDate}` : ""}#fiche-groupe`;
+  const presentationHref = `/presentation?group=${encodeURIComponent(groupId)}&period=${encodeURIComponent(period === "custom" ? "30d" : period)}`;
 
   return (
     <main className="dashboard">
@@ -181,6 +182,7 @@ export default async function Home({ searchParams }: PageProps) {
           {access.role === "president" && <a href="#equilibre">Équilibre</a>}
           {access.role === "network" && <a href="#pilotage">Pilotage</a>}
           <a href="#detail">Détail</a>
+          <Link className="meetingModeLink" href={presentationHref}>Présenter en réunion</Link>
         </nav>
 
         {access.role === "network" && <div className="networkToolbar"><Link href="/rapport">Consulter le rapport mensuel</Link></div>}
