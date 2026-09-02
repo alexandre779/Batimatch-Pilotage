@@ -19,9 +19,21 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Check Cloudflare vinext compatibility
-        run: npx --yes vinext@latest check
+        run: npx vinext check
       - name: Build Cloudflare target
         run: npm run build:vinext
         env:
           AIRTABLE_TOKEN: pat_ci_placeholder
           AIRTABLE_BASE_ID: appfHlDc9F79EB56n
+      - name: Verify deployable Workers output
+        run: |
+          test -f dist/server/wrangler.json
+          test -d dist/client
+          node -e '
+            const fs = require("node:fs");
+            const config = JSON.parse(fs.readFileSync("dist/server/wrangler.json", "utf8"));
+            if (config.keep_vars !== true) throw new Error("Generated config must preserve runtime variables");
+            const files = fs.readdirSync("dist/server/_next/static").filter((file) => file.endsWith(".js"));
+            const output = files.map((file) => fs.readFileSync(`dist/server/_next/static/${file}`, "utf8")).join("\n");
+            if (!output.includes("cloudflare:workers")) throw new Error("Cloudflare runtime bindings were not preserved in the server bundle");
+          '
