@@ -1,5 +1,5 @@
 import "server-only";
-import { env as runtimeEnv } from "node:process";
+import { env } from "cloudflare:workers";
 import { AIRTABLE_BASE_ID } from "./config";
 
 type AirtableRecord = {
@@ -14,13 +14,13 @@ type AirtableListResponse = {
 };
 
 function getToken() {
-  const token = runtimeEnv.AIRTABLE_TOKEN;
+  const token = env.AIRTABLE_TOKEN as string | undefined;
   if (!token) throw new Error("AIRTABLE_TOKEN is not configured");
   return token;
 }
 
 function getBaseId() {
-  return runtimeEnv.AIRTABLE_BASE_ID ?? AIRTABLE_BASE_ID;
+  return (env.AIRTABLE_BASE_ID as string | undefined) ?? AIRTABLE_BASE_ID;
 }
 
 export async function listRecords(
