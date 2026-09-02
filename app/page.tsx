@@ -213,10 +213,10 @@ export default async function Home({ searchParams }: PageProps) {
         <nav className="dashboardNav" aria-label="Navigation dans le tableau de bord">
           {access.role === "network" ? <>
             <a href="#vue-ensemble">Vue d’ensemble</a>
-            <a href="#pilotage">Groupes</a>
             <a href="#croissance">Croissance</a>
-            <a href="#conversion">Conversion</a>
+            <a href="#pilotage">Groupes</a>
             <a href="#alertes">Alertes</a>
+            <a href="#conversion">Conversion</a>
           </> : <>
             <a href="#priorites">Aujourd’hui</a>
             <a href="#resultats">Résultats</a>
