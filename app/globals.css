@@ -73,6 +73,19 @@ button:hover { filter: brightness(.96); }
 .chart text { fill: var(--muted); font-size: 10px; }
 .gridLine { stroke: var(--line); stroke-width: 1; }
 .chartEmpty { min-height: 190px; display: grid; place-items: center; color: var(--muted); }
+.maturityCard { margin-bottom: 28px; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.maturityHeader { display: flex; justify-content: space-between; align-items: start; gap: 24px; }
+.maturityHeader > div:first-child > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+.maturityControls { display: flex; gap: 10px; flex-shrink: 0; }
+.maturityControls label { min-width: 165px; }
+.maturityControls label:last-child { min-width: 112px; }
+.maturityControls span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.maturityControls select { padding: 10px 12px; font-size: 12px; }
+.maturityLegend { margin: 20px 0 6px; display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted); font-size: 11px; }
+.maturityLegend span { display: flex; align-items: center; gap: 6px; }
+.maturityLegend i { width: 9px; height: 9px; border-radius: 50%; }
+.maturityChart { display: block; width: 100%; min-height: 300px; overflow: visible; }
+.maturityChart text { fill: var(--muted); font-size: 10px; }
 .podiumSection { margin-top: 28px; }
 .podiumGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .podiumCard { min-width: 0; padding: 22px 22px 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
@@ -124,4 +137,9 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
   .podiumCard { padding-left: 14px; padding-right: 14px; }
   .podiumPerson strong { font-size: 11px; }
   .podiumStep strong { font-size: 12px; }
+  .maturityCard { padding: 18px 14px; overflow-x: auto; }
+  .maturityHeader { flex-direction: column; }
+  .maturityControls { width: 100%; }
+  .maturityControls label { min-width: 0; flex: 1; }
+  .maturityChart { width: 760px; }
 }

@@ -56,6 +56,19 @@ export type LeaderboardEntry = {
   amount: number;
 };
 
+export type MaturityPoint = {
+  month: number;
+  volume: number;
+  revenue: number;
+  opportunities: number;
+};
+
+export type MaturitySeries = {
+  id: string;
+  name: string;
+  points: MaturityPoint[];
+};
+
 export type DashboardData = {
   groups: GroupPerformance[];
   kpis: DashboardKpis;
@@ -75,6 +88,7 @@ export type DashboardData = {
     newMembers: number;
     guests: number;
   } | null;
+  maturitySeries: MaturitySeries[];
   selectedGroupName: string | null;
 };
 
@@ -149,7 +163,7 @@ export async function getDashboardData(
 
   const [users, groupRecords, opportunities, guests] = await Promise.all([
     listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.groupLinks, uf.testStartDate]),
-    listRecords(TABLES.groups, [gf.name, gf.members]),
+    listRecords(TABLES.groups, [gf.name, gf.members, gf.createdAt]),
     listRecords(TABLES.opportunities, [
       of.giver,
       of.receiver,
@@ -278,6 +292,46 @@ export async function getDashboardData(
 
   const validSelectedGroupId = selectedGroupId !== "all" && groupNames.has(selectedGroupId) ? selectedGroupId : null;
 
+  const maturityReferenceDate = new Date();
+  const maturitySeries: MaturitySeries[] = groupRecords.flatMap((group) => {
+    const openedAt = recordDate(group.fields[gf.createdAt]);
+    if (!openedAt || openedAt > maturityReferenceDate) return [];
+    const monthCount = Math.min(24, Math.floor((maturityReferenceDate.getTime() - openedAt.getTime()) / (30 * 24 * 60 * 60 * 1000)) + 1);
+    const points = Array.from({ length: monthCount }, (_, index) => ({
+      month: index + 1,
+      volume: 0,
+      revenue: 0,
+      opportunities: 0
+    }));
+    return [{ id: group.id, name: asString(group.fields[gf.name]) || "Groupe sans nom", points }];
+  });
+  const maturityByGroup = new Map(maturitySeries.map((series) => [series.id, series]));
+
+  function maturityMonth(groupId: string, value: unknown) {
+    const openedAt = recordDate(groupRecords.find((group) => group.id === groupId)?.fields[gf.createdAt]);
+    const date = recordDate(value);
+    if (!openedAt || !date || date < openedAt) return null;
+    const month = Math.floor((date.getTime() - openedAt.getTime()) / (30 * 24 * 60 * 60 * 1000)) + 1;
+    return month >= 1 && month <= 24 ? month : null;
+  }
+
+  for (const opportunity of opportunities) {
+    const groupId = opportunityGroup(opportunity, "receiver");
+    if (!groupId) continue;
+    const series = maturityByGroup.get(groupId);
+    if (!series) continue;
+    const activityMonth = maturityMonth(groupId, opportunity.fields[of.createdAt]);
+    if (activityMonth && series.points[activityMonth - 1]) {
+      series.points[activityMonth - 1].opportunities += 1;
+      series.points[activityMonth - 1].volume += asNumber(opportunity.fields[of.opportunityAmount]);
+    }
+    if (asString(opportunity.fields[of.stage]) !== WON_STAGE) continue;
+    const revenueMonth = maturityMonth(groupId, opportunity.fields[of.closedAt]);
+    if (revenueMonth && series.points[revenueMonth - 1]) {
+      series.points[revenueMonth - 1].revenue += asNumber(opportunity.fields[of.quoteAmountHT]);
+    }
+  }
+
   function leaderboard(source: typeof opportunities, role: "giver" | "receiver", amountField: string, wonOnly = false) {
     const totals = new Map<string, LeaderboardEntry>();
 
@@ -384,6 +438,7 @@ export async function getDashboardData(
     leaderboards,
     development: development(bounds.start, bounds.end),
     previousDevelopment: bounds.previousStart ? development(bounds.previousStart, bounds.previousEnd) : null,
+    maturitySeries,
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }

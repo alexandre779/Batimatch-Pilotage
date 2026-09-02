@@ -50,6 +50,7 @@ export const FIELDS = {
     conversionRate: "fld1n9FzoYx2ylnbl",
     revenue: "fld8S3LSKkwftvwmz",
     receivedVolume: "fldL4O6nf2kFewoOz",
+    createdAt: "fldqi6kDDqWZO2PaY",
     city: "fldtS1NkChyJOj7X6",
     department: "fldn4d6hZQcAhH5nI",
     region: "fldrAfKgnFsBtprGI"
