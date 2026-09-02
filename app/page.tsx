@@ -137,6 +137,8 @@ export default async function Home({ searchParams }: PageProps) {
     : PERIODS.find((p) => p.value === period)?.label ?? "30 derniers jours";
   const scopeLabel = data?.selectedGroupName ?? "Réseau national";
   const selectedGroup = groupId === "all" ? null : groups.find((group) => group.id === groupId) ?? null;
+  const firstName = access.name?.split(/[\s-]+/).find(Boolean) ?? null;
+  const heroTitle = access.role === "president" ? `Bonjour${firstName ? ` ${firstName}` : ""} 👋` : `Bonjour${firstName ? ` ${firstName}` : ""}`;
   const groupHref = (id: string) => `/?group=${encodeURIComponent(id)}&period=${encodeURIComponent(period)}${period === "custom" ? `&start=${startDate}&end=${endDate}` : ""}#fiche-groupe`;
 
   return (
@@ -151,8 +153,9 @@ export default async function Home({ searchParams }: PageProps) {
         </header>
         <div className="heroContent">
           <div>
-            <p className="eyebrow eyebrowLight">PILOTAGE RÉSEAU</p>
-            <h1>La performance<br />en un coup d’œil.</h1>
+            <p className="eyebrow eyebrowLight">{access.role === "president" ? "VOTRE PILOTAGE DU JOUR" : "PILOTAGE DU RÉSEAU"}</p>
+            <h1>{heroTitle}</h1>
+            <p className="heroPromise">{access.role === "president" ? `Voici ce qui mérite votre attention chez ${scopeLabel} aujourd’hui.` : "La performance nationale et les groupes à accompagner, en un coup d’œil."}</p>
             <p className="subtitle subtitleLight">{scopeLabel} · {periodLabel}</p>
           </div>
           <div className="heroAccent" aria-hidden="true">B</div>
@@ -171,6 +174,15 @@ export default async function Home({ searchParams }: PageProps) {
           endDate={endDate}
         />
 
+        <nav className="dashboardNav" aria-label="Navigation dans le tableau de bord">
+          <a href="#priorites">Aujourd’hui</a>
+          <a href="#resultats">Résultats</a>
+          {access.role === "president" && <a href="#objectif">Objectif</a>}
+          {access.role === "president" && <a href="#equilibre">Équilibre</a>}
+          {access.role === "network" && <a href="#pilotage">Pilotage</a>}
+          <a href="#detail">Détail</a>
+        </nav>
+
         {access.role === "network" && <div className="networkToolbar"><Link href="/rapport">Consulter le rapport mensuel</Link></div>}
 
         {dataError && (
@@ -180,7 +192,7 @@ export default async function Home({ searchParams }: PageProps) {
         )}
 
         {data && (
-          <section className="pendingActionCard" aria-label="Affaires en attente de traitement">
+          <section className="pendingActionCard" id="priorites" aria-label="Affaires en attente de traitement">
             <div>
               <p className="eyebrow">À TRAITER</p>
               <h2>Affaires en attente de prise en charge</h2>
@@ -206,9 +218,9 @@ export default async function Home({ searchParams }: PageProps) {
 
         {access.role === "president" && data?.goalSimulator && <GoalSimulator simulator={data.goalSimulator} />}
 
-        {access.role === "president" && data?.groupBalance && <CollapsibleBlock eyebrow="ÉQUILIBRE DU GROUPE" title="Qui contribue, qui reçoit, qui remobiliser ?" hint="Lecture calculée sur la période sélectionnée."><GroupBalance balance={data.groupBalance} /></CollapsibleBlock>}
+        {access.role === "president" && data?.groupBalance && <div id="equilibre"><CollapsibleBlock eyebrow="ÉQUILIBRE DU GROUPE" title="Qui contribue, qui reçoit, qui remobiliser ?" hint="Lecture calculée sur la période sélectionnée."><GroupBalance balance={data.groupBalance} /></CollapsibleBlock></div>}
 
-        <section className="sectionBlock">
+        <section className="sectionBlock" id="resultats">
           <div className="sectionHeading">
             <div><p className="eyebrow">L’ESSENTIEL</p><h2>Résultats business</h2></div>
             {period !== "all" && <span className="comparisonNote">Évolution vs période précédente</span>}
@@ -249,7 +261,7 @@ export default async function Home({ searchParams }: PageProps) {
 
         {access.role === "network" && data && <MaturityChart series={data.maturitySeries} />}
 
-        {access.role === "network" && data && <NetworkPilotage data={data} />}
+        {access.role === "network" && data && <div id="pilotage"><NetworkPilotage data={data} /></div>}
 
         {access.role === "network" && data && selectedGroup && <GroupDetail group={selectedGroup} data={data} />}
 
@@ -277,7 +289,7 @@ export default async function Home({ searchParams }: PageProps) {
           </CollapsibleBlock>
         )}
 
-        {access.role === "president" ? <CollapsibleBlock eyebrow="DONNÉES" title="Performance détaillée du groupe" hint="Tous les indicateurs consolidés dans un tableau."><section className="panel panelEmbedded"><div className="tableWrap"><PerformanceTable groups={visibleGroups} accessRole={access.role} groupHref={groupHref} /></div></section></CollapsibleBlock> : <section className="panel">
+        <div id="detail">{access.role === "president" ? <CollapsibleBlock eyebrow="DONNÉES" title="Performance détaillée du groupe" hint="Tous les indicateurs consolidés dans un tableau."><section className="panel panelEmbedded"><div className="tableWrap"><PerformanceTable groups={visibleGroups} accessRole={access.role} groupHref={groupHref} /></div></section></CollapsibleBlock> : <section className="panel">
         <div className="panelTitle">
           <div>
             <p className="eyebrow">GROUPES</p>
@@ -288,7 +300,7 @@ export default async function Home({ searchParams }: PageProps) {
         <div className="tableWrap">
           <PerformanceTable groups={visibleGroups} accessRole={access.role} groupHref={groupHref} />
         </div>
-        </section>}
+        </section>}</div>
         <footer>Des pros du BTP qui se ressemblent et qui bossent ensemble.</footer>
       </div>
     </main>

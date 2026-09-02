@@ -25,6 +25,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: Roboto
 .heroAccent { color: var(--accent); font-family: Montserrat, Arial, sans-serif; font-size: clamp(120px, 18vw, 260px); font-weight: 900; line-height: .65; opacity: .16; transform: rotate(-8deg); position: absolute; right: 5%; bottom: -18px; }
 h1, h2, .kpi strong { font-family: Montserrat, Arial, sans-serif; }
 h1 { margin: 8px 0 0; font-size: clamp(40px, 5vw, 68px); line-height: .98; letter-spacing: -0.045em; }
+.heroPromise { max-width: 660px; margin: 17px 0 0; color: white; font-family: Montserrat,Arial,sans-serif; font-size: clamp(16px,1.7vw,22px); font-weight: 600; line-height: 1.35; }
 h2 { margin: 5px 0 0; font-size: 24px; letter-spacing: -.025em; }
 .eyebrow { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .18em; color: var(--accent); }
 .eyebrowLight { color: var(--accent); }
@@ -33,6 +34,10 @@ h2 { margin: 5px 0 0; font-size: 24px; letter-spacing: -.025em; }
 .content { max-width: 1440px; margin: 0 auto; padding: 0 40px 40px; }
 .filters { display: grid; grid-template-columns: 1fr minmax(180px, auto) minmax(180px, auto) auto; gap: 10px; align-items: center; padding: 15px; background: white; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 30px rgba(16,47,79,.08); transform: translateY(-28px); margin-bottom: 6px; position: relative; z-index: 2; }
 .filtersCustom { grid-template-columns: minmax(145px, 1fr) minmax(170px, auto) minmax(170px, auto) minmax(290px, auto) auto; }
+.dashboardNav { margin: -10px 0 27px; padding: 8px; display: flex; justify-content: center; gap: 5px; position: sticky; top: 10px; z-index: 20; background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(16,47,79,.12); backdrop-filter: blur(12px); }
+.dashboardNav a { padding: 9px 15px; color: var(--muted); border-radius: 8px; font-size: 11px; font-weight: 800; text-decoration: none; transition: color .18s ease, background .18s ease, transform .18s ease; }
+.dashboardNav a:hover, .dashboardNav a:focus-visible { color: white; background: var(--dark); transform: translateY(-1px); outline: none; }
+#priorites, #resultats, #objectif, #equilibre, #pilotage, #detail { scroll-margin-top: 88px; }
 .filterIntro { padding: 0 10px; display: flex; flex-direction: column; gap: 3px; }
 .filterIntro span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .09em; }
 .filterIntro strong { font-family: Montserrat, Arial, sans-serif; font-size: 14px; }
@@ -89,9 +94,17 @@ button:hover { filter: brightness(.96); }
 .goalHeader h2 { font-size: 27px; }
 .goalHeader p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
 .goalHeader > span { padding: 7px 10px; color: var(--accent); background: #fff3ea; border-radius: 999px; font-size: 10px; font-weight: 800; }
-.goalOverview { margin-top: 20px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); border: 1px solid var(--line); border-radius: 10px; }
+.goalDashboard { margin-top: 22px; display: grid; grid-template-columns: 200px minmax(0,1fr); align-items: center; gap: 25px; }
+.goalRing { --goal-progress: 0deg; width: 178px; aspect-ratio: 1; display: grid; place-items: center; position: relative; background: conic-gradient(var(--accent) var(--goal-progress), #ebe9e5 0); border-radius: 50%; box-shadow: 0 14px 34px rgba(16,47,79,.12); animation: ringReveal .8s cubic-bezier(.2,.7,.2,1) both; }
+.goalRing::before { width: 132px; aspect-ratio: 1; position: absolute; content: ""; background: white; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(16,47,79,.05); }
+.goalRing > div { z-index: 1; text-align: center; }
+.goalRing strong { display: block; font-family: Montserrat,Arial,sans-serif; font-size: 42px; letter-spacing: -.06em; line-height: 1; }
+.goalRing strong small { font-size: 17px; }
+.goalRing span { display: block; margin-top: 7px; color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+.goalOverview { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); border: 1px solid var(--line); border-radius: 10px; }
 .goalOverview > div { padding: 15px 18px; border-right: 1px solid var(--line); }
-.goalOverview > div:last-child { border-right: 0; }
+.goalOverview > div:nth-child(2n) { border-right: 0; }
+.goalOverview > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
 .goalOverview span { display: block; color: var(--muted); font-size: 9px; }
 .goalOverview strong { display: block; margin-top: 5px; font-family: Montserrat,Arial,sans-serif; font-size: 20px; }
 .goalProgress { height: 9px; margin: 18px 0 37px; position: relative; background: var(--bg); border-radius: 99px; }
@@ -180,6 +193,8 @@ button:hover { filter: brightness(.96); }
 .recruitmentKpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .recruitmentKpis .kpi { min-height: 126px; border-top: 4px solid var(--accent); }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-height: 116px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+.kpi, .pendingActionCard, .presidentCoach, .goalSimulator, .collapsibleBlock { animation: cardArrival .45s ease both; }
+.kpi:hover, .podiumCard:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(16,47,79,.09); transition: transform .18s ease, box-shadow .18s ease; }
 .kpiFeatured { min-height: 142px; border-top: 4px solid var(--accent); }
 .kpiFeatured:first-child { background: var(--dark); border-color: var(--dark); color: white; }
 .kpiFeatured:first-child span, .kpiFeatured:first-child small { color: rgba(255,255,255,.68); }
@@ -376,18 +391,26 @@ tbody tr:hover { background: #fff8f3; }
 tbody tr:last-child td { border-bottom: 0; }
 .empty { color: var(--muted); text-align: center; padding: 38px; }
 footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: center; }
-@media (max-width: 1100px) { .kpisPrimary, .kpisSecondary { grid-template-columns: repeat(2, 1fr); } .charts, .podiumGrid, .networkSplit { grid-template-columns: 1fr; } .healthGrid, .networkRankings { grid-template-columns: repeat(2, minmax(0, 1fr)); } .coachGrid, .balanceBody { grid-template-columns: 1fr; } .goalOverview { grid-template-columns: repeat(2,1fr); } .goalOverview > div:nth-child(2) { border-right: 0; } .scenarioGrid { grid-template-columns: 1fr; } .coachActionBody > p { min-height: 0; } .groupDetailKpis { grid-template-columns: repeat(3, 1fr); } .groupDetailKpis > div:nth-child(3) { border-right: 0; } .groupDetailColumns { grid-template-columns: 1fr; } .groupDetailPanel { border-right: 0; border-bottom: 1px solid var(--line); } }
+@keyframes cardArrival { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ringReveal { from { opacity: 0; transform: scale(.88) rotate(-10deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@media (max-width: 1100px) { .kpisPrimary, .kpisSecondary { grid-template-columns: repeat(2, 1fr); } .charts, .podiumGrid, .networkSplit { grid-template-columns: 1fr; } .healthGrid, .networkRankings { grid-template-columns: repeat(2, minmax(0, 1fr)); } .coachGrid, .balanceBody { grid-template-columns: 1fr; } .goalDashboard { grid-template-columns: 170px minmax(0,1fr); } .goalRing { width: 156px; } .scenarioGrid { grid-template-columns: 1fr; } .coachActionBody > p { min-height: 0; } .groupDetailKpis { grid-template-columns: repeat(3, 1fr); } .groupDetailKpis > div:nth-child(3) { border-right: 0; } .groupDetailColumns { grid-template-columns: 1fr; } .groupDetailPanel { border-right: 0; border-bottom: 1px solid var(--line); } }
 @media (max-width: 760px) {
   .brandbar, .heroContent { padding-left: 20px; padding-right: 20px; }
   .brandbar > p, .heroAccent { display: none; }
   .heroContent { padding-top: 38px; padding-bottom: 58px; }
   .content { padding-left: 16px; padding-right: 16px; }
+  .dashboardNav { margin-top: -12px; justify-content: start; overflow-x: auto; top: 6px; }
+  .dashboardNav a { flex: 0 0 auto; padding: 9px 12px; }
   .filters { grid-template-columns: 1fr; transform: translateY(-24px); }
   .dateRange { grid-template-columns: 1fr 1fr; }
   .filterIntro { padding: 4px 2px 8px; }
   .sectionHeading { align-items: start; flex-direction: column; gap: 6px; }
   .pendingActionCard { align-items: stretch; flex-direction: column; }
   .pendingActionValue { width: 100%; }
+  .goalDashboard { grid-template-columns: 1fr; justify-items: center; }
+  .goalOverview { width: 100%; grid-template-columns: 1fr; }
+  .goalOverview > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .goalOverview > div:last-child { border-bottom: 0; }
   .presidentCoach { padding: 20px 15px; }
   .coachHeader { align-items: start; flex-direction: column; }
   .balanceSection { padding: 20px 14px; }
@@ -419,6 +442,10 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
   .monthlyReport { padding: 22px 16px 36px; }
   .reportHeader, .reportTitle { align-items: start; flex-direction: column; }
   .reportSummary, .reportHighlights { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
 @media print {

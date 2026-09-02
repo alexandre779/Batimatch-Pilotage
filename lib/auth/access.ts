@@ -8,6 +8,7 @@ type AccessPayload = { aud?: string | string[]; email?: string; exp?: number; is
 
 export type PilotageAccess = {
   email: string | null;
+  name: string | null;
   groupId: string | null;
   role: "network" | "president";
   secured: boolean;
@@ -72,21 +73,23 @@ export async function getPilotageAccess(accessToken: string | null): Promise<Pil
 
   // Keep the current dashboard reachable until Access is configured. Once both
   // variables exist, authentication and Airtable authorization are mandatory.
-  if (!teamDomain || !audience) return { email: null, groupId: null, role: "network", secured: false };
+  if (!teamDomain || !audience) return { email: null, name: null, groupId: null, role: "network", secured: false };
   if (!accessToken) throw new Error("Connexion requise");
 
   const email = await verifyAccessToken(accessToken, teamDomain, audience);
   const fields = FIELDS.users;
-  const users = await listRecords(TABLES.users, [fields.email, fields.memberStatus, fields.ownedGroups, fields.pilotageRole]);
+  const users = await listRecords(TABLES.users, [fields.email, fields.displayName, fields.memberStatus, fields.ownedGroups, fields.pilotageRole]);
   const user = users.find((record) => String(record.fields[fields.email] ?? "").trim().toLowerCase() === email);
   if (!user || selectName(user.fields[fields.memberStatus]) !== "Actif") throw new Error("Accès pilotage non autorisé");
 
   const role = selectName(user.fields[fields.pilotageRole]);
-  if (role === "Tête de réseau") return { email, groupId: null, role: "network", secured: true };
+  const displayName = user.fields[fields.displayName];
+  const name = typeof displayName === "string" ? displayName.trim() : null;
+  if (role === "Tête de réseau") return { email, name, groupId: null, role: "network", secured: true };
   if (role === "Président") {
     const groupId = firstLinkedRecord(user.fields[fields.ownedGroups]);
     if (!groupId) throw new Error("Aucun groupe n’est associé à ce président");
-    return { email, groupId, role: "president", secured: true };
+    return { email, name, groupId, role: "president", secured: true };
   }
   throw new Error("Accès pilotage non autorisé");
 }
