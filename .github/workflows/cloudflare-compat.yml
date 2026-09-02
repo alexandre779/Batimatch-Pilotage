@@ -1,4 +1,4 @@
-name: Cloudflare compatibility
+name: Cloudflare Workers compatibility
 
 on:
   push:
@@ -11,15 +11,39 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
+
+      - name: Install current dependencies
         run: npm install
+
       - name: Check Next.js compatibility with vinext
         run: npx --yes vinext@latest check
-      - name: Validate current Next.js build
+
+      - name: Initialize Cloudflare Workers target
+        run: >-
+          npx --yes vinext@latest init
+          --skip-check
+          --platform=cloudflare
+          --data-cache=kv
+          --image-optimization=cloudflare-images
+
+      - name: Build for Cloudflare Workers with vinext
+        run: npm run build:vinext
+        env:
+          AIRTABLE_TOKEN: pat_ci_placeholder
+          AIRTABLE_BASE_ID: appfHlDc9F79EB56n
+
+      - name: Verify Workers output
+        run: |
+          test -f dist/server/wrangler.json
+          test -d dist/client
+          echo "Cloudflare Workers build output is valid"
+
+      - name: Verify original Next.js build still works
         run: npm run build
         env:
           AIRTABLE_TOKEN: pat_ci_placeholder
