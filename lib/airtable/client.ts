@@ -1,6 +1,19 @@
 import "server-only";
-import { env } from "cloudflare:workers";
+import { env as cloudflareBindings } from "cloudflare:workers";
 import { AIRTABLE_BASE_ID } from "./config";
+
+type RuntimeBindings = {
+  AIRTABLE_BASE_ID?: string;
+  AIRTABLE_TOKEN?: string;
+};
+
+const runtimeBindings = cloudflareBindings as RuntimeBindings;
+
+function getRuntimeVariable(name: keyof RuntimeBindings) {
+  // Workers variables and secrets are request-time bindings; process.env is
+  // only a fallback for local Node/Next.js execution.
+  return runtimeBindings[name] ?? process.env[name];
+}
 
 type AirtableRecord = {
   id: string;
@@ -14,13 +27,13 @@ type AirtableListResponse = {
 };
 
 function getToken() {
-  const token = env.AIRTABLE_TOKEN as string | undefined;
+  const token = getRuntimeVariable("AIRTABLE_TOKEN");
   if (!token) throw new Error("AIRTABLE_TOKEN is not configured");
   return token;
 }
 
 function getBaseId() {
-  return (env.AIRTABLE_BASE_ID as string | undefined) ?? AIRTABLE_BASE_ID;
+  return getRuntimeVariable("AIRTABLE_BASE_ID") ?? AIRTABLE_BASE_ID;
 }
 
 export async function listRecords(
