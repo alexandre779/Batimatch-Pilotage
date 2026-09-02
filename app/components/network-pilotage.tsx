@@ -1,4 +1,5 @@
 import type { DashboardData, GroupPerformance } from "@/lib/services/dashboard";
+import { NetworkHealthMatrix } from "@/app/components/network-health-matrix";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
@@ -17,7 +18,7 @@ function Ranking({ title, groups, value }: { title: string; groups: GroupPerform
   );
 }
 
-export function NetworkPilotage({ data }: { data: DashboardData }) {
+export function NetworkPilotage({ data, groupLinks }: { data: DashboardData; groupLinks: Record<string, string> }) {
   const byRevenue = [...data.groups].sort((a, b) => b.revenueWon - a.revenueWon);
   const bySent = [...data.groups].sort((a, b) => b.opportunitiesSent - a.opportunitiesSent);
   const byClosing = [...data.groups].filter((group) => group.opportunitiesReceived > 0).sort((a, b) => b.closingRate - a.closingRate);
@@ -25,26 +26,7 @@ export function NetworkPilotage({ data }: { data: DashboardData }) {
 
   return (
     <>
-      <section className="sectionBlock networkCommand">
-        <div className="sectionHeading">
-          <div><p className="eyebrow">SUPERVISION</p><h2>Vigilance opérationnelle des groupes</h2></div>
-          <span className="comparisonNote">Les groupes nécessitant une action apparaissent en premier</span>
-        </div>
-        <div className="healthGrid">
-          {data.networkHealth.map((group) => (
-            <article className={`healthCard health-${group.status}`} key={group.id}>
-              <header><strong>{group.name}</strong><span title="Score de vigilance opérationnelle">Vigilance {group.score}/100</span></header>
-              <div className="healthStatus"><i />{group.status === "healthy" ? "Situation saine" : group.status === "watch" ? "À surveiller" : "Action requise"}</div>
-              <dl>
-                <div><dt>Adhérents actifs</dt><dd>{number.format(group.activeMembers)}</dd></div>
-                <div><dt>À traiter</dt><dd>{number.format(group.pendingTreatment)}</dd></div>
-                <div><dt>En retard +7 j</dt><dd>{number.format(group.overdueTreatment)}</dd></div>
-                <div><dt>Dernière affaire</dt><dd>{group.daysSinceLastOpportunity === null ? "Jamais" : `${group.daysSinceLastOpportunity} j`}</dd></div>
-              </dl>
-            </article>
-          ))}
-        </div>
-      </section>
+      <NetworkHealthMatrix groups={data.groups} health={data.networkHealth} objectives={data.groupObjectives} alerts={data.networkAlerts} links={groupLinks} />
 
       <section className="networkSplit sectionBlock">
         <article className="networkPanel alertPanel" id="alertes">

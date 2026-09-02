@@ -67,6 +67,17 @@ const selectName = (value: unknown) => typeof value === "string"
   ? value
   : value && typeof value === "object" && "name" in value && typeof value.name === "string" ? value.name : "";
 
+function inferFirstName(firstName: unknown, displayName: unknown, email: string) {
+  if (typeof firstName === "string" && firstName.trim()) return firstName.trim();
+  if (typeof displayName === "string") {
+    const tokens = displayName.trim().split(/\s+/).filter(Boolean);
+    const naturallyCased = tokens.find((token) => token !== token.toLocaleUpperCase("fr-FR"));
+    if (naturallyCased) return naturallyCased;
+  }
+  const emailName = email.split("@")[0]?.split(/[._-]/).find(Boolean);
+  return emailName ? `${emailName.charAt(0).toLocaleUpperCase("fr-FR")}${emailName.slice(1).toLocaleLowerCase("fr-FR")}` : null;
+}
+
 export async function getPilotageAccess(accessToken: string | null): Promise<PilotageAccess> {
   const teamDomain = runtimeVariable("ACCESS_TEAM_DOMAIN");
   const audience = runtimeVariable("ACCESS_AUD");
@@ -85,8 +96,7 @@ export async function getPilotageAccess(accessToken: string | null): Promise<Pil
   const role = selectName(user.fields[fields.pilotageRole]);
   const firstName = user.fields[fields.firstName];
   const displayName = user.fields[fields.displayName];
-  const fallbackName = typeof displayName === "string" ? displayName.trim().split(/\s+/).at(-1) ?? null : null;
-  const name = typeof firstName === "string" && firstName.trim() ? firstName.trim() : fallbackName;
+  const name = inferFirstName(firstName, displayName, email);
   if (role === "Tête de réseau") return { email, name, groupId: null, role: "network", secured: true };
   if (role === "Président") {
     const groupId = firstLinkedRecord(user.fields[fields.ownedGroups]);

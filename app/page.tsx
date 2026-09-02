@@ -174,6 +174,7 @@ export default async function Home({ searchParams }: PageProps) {
   const firstName = access.name?.split(/[\s-]+/).find(Boolean) ?? null;
   const heroTitle = access.role === "president" ? `Bonjour${firstName ? ` ${firstName}` : ""} 👋` : `Bonjour${firstName ? ` ${firstName}` : ""}`;
   const groupHref = (id: string) => `/?group=${encodeURIComponent(id)}&period=${encodeURIComponent(period)}${period === "custom" ? `&start=${startDate}&end=${endDate}` : ""}#fiche-groupe`;
+  const groupLinks = Object.fromEntries(groups.map((group) => [group.id, groupHref(group.id)]));
   const presentationHref = `/presentation?group=${encodeURIComponent(groupId)}&period=${encodeURIComponent(period === "custom" ? "30d" : period)}`;
 
   return (
@@ -223,7 +224,7 @@ export default async function Home({ searchParams }: PageProps) {
             <a href="#equilibre">Équilibre</a>
             <a href="#detail">Détail</a>
           </>}
-          <Link className="meetingModeLink" href={presentationHref}>Présenter en réunion</Link>
+          {access.role === "president" && <Link className="meetingModeLink" href={presentationHref}>Présenter en réunion</Link>}
         </nav>
 
         {access.role === "network" && <div className="networkToolbar"><Link href="/rapport">Consulter le rapport mensuel</Link></div>}
@@ -306,7 +307,7 @@ export default async function Home({ searchParams }: PageProps) {
 
         {access.role === "network" && data && <div id="croissance"><MaturityChart series={data.maturitySeries} /></div>}
 
-        {access.role === "network" && data && <div id="pilotage"><NetworkPilotage data={data} /></div>}
+        {access.role === "network" && data && <div id="pilotage"><NetworkPilotage data={data} groupLinks={groupLinks} /></div>}
 
         {access.role === "network" && data && selectedGroup && <GroupDetail group={selectedGroup} data={data} />}
 
