@@ -47,7 +47,7 @@ export function NetworkPilotage({ data }: { data: DashboardData }) {
       </section>
 
       <section className="networkSplit sectionBlock">
-        <article className="networkPanel alertPanel">
+        <article className="networkPanel alertPanel" id="alertes">
           <div className="networkPanelHeader"><p className="eyebrow">ALERTES</p><h2>Points d’attention</h2></div>
           <div className="alertList">
             {data.networkAlerts.length ? data.networkAlerts.map((alert) => (
@@ -69,7 +69,7 @@ export function NetworkPilotage({ data }: { data: DashboardData }) {
         </article>
       </section>
 
-      <section className="networkPanel sectionBlock">
+      <section className="networkPanel sectionBlock" id="conversion">
         <div className="networkPanelHeader"><p className="eyebrow">CONVERSION</p><h2>Entonnoir commercial national</h2><p>Affaires créées sur la période sélectionnée, comptabilisées selon l’étape atteinte.</p></div>
         <div className="funnel">
           {data.funnel.map((step, index) => {

@@ -89,6 +89,40 @@ function PerformanceTable({ groups, accessRole, groupHref }: { groups: Awaited<R
   </tbody></table>;
 }
 
+function NetworkExecutiveOverview({ data, periodLabel }: { data: Awaited<ReturnType<typeof getDashboardData>>; periodLabel: string }) {
+  const activeGroups = data.groups.filter((group) => group.memberCount > 0).length;
+  const groupsToWatch = data.networkHealth.filter((group) => group.status !== "healthy").length;
+  const revenueChange = data.previousKpis?.revenueWon
+    ? (data.kpis.revenueWon - data.previousKpis.revenueWon) / Math.abs(data.previousKpis.revenueWon)
+    : null;
+  const trend = revenueChange === null
+    ? "La dynamique du réseau se construit sur cette période."
+    : revenueChange >= 0
+      ? `Le chiffre d’affaires progresse de ${percent.format(revenueChange)} par rapport à la période précédente.`
+      : `Le chiffre d’affaires recule de ${percent.format(Math.abs(revenueChange))} par rapport à la période précédente.`;
+  const attention = groupsToWatch
+    ? `${groupsToWatch} groupe${groupsToWatch > 1 ? "s nécessitent" : " nécessite"} actuellement une attention.`
+    : "Tous les groupes présentent une situation opérationnelle saine.";
+
+  return (
+    <section className="networkExecutive" id="vue-ensemble">
+      <div className="networkExecutiveHeader">
+        <div><p className="eyebrow">VUE D’ENSEMBLE</p><h2>Le réseau en un coup d’œil</h2></div>
+        <span>{periodLabel}</span>
+      </div>
+      <div className="networkExecutiveGrid">
+        <article className="networkExecutiveKpi featured"><span>Chiffre d’affaires signé</span><strong>{euro.format(data.kpis.revenueWon)}</strong><small>devis HT gagnés</small></article>
+        <article className="networkExecutiveKpi"><span>Affaires échangées</span><strong>{number.format(data.kpis.opportunitiesReceived)}</strong><small>opportunités reçues dans le réseau</small></article>
+        <article className="networkExecutiveKpi"><span>Adhérents actifs</span><strong>{number.format(data.kpis.activeMembers)}</strong><small>membres actuellement actifs</small></article>
+        <article className="networkExecutiveKpi"><span>Groupes actifs</span><strong>{number.format(activeGroups)}</strong><small>sur {number.format(data.groups.length)} groupe{data.groups.length > 1 ? "s" : ""}</small></article>
+      </div>
+      <div className={`networkExecutiveInsight${revenueChange !== null && revenueChange < 0 ? " watch" : ""}`}>
+        <span aria-hidden="true">{revenueChange !== null && revenueChange < 0 ? "!" : "↗"}</span><p><strong>{trend}</strong> {attention}</p>
+      </div>
+    </section>
+  );
+}
+
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -176,12 +210,19 @@ export default async function Home({ searchParams }: PageProps) {
         />
 
         <nav className="dashboardNav" aria-label="Navigation dans le tableau de bord">
-          <a href="#priorites">Aujourd’hui</a>
-          <a href="#resultats">Résultats</a>
-          {access.role === "president" && <a href="#objectif">Objectif</a>}
-          {access.role === "president" && <a href="#equilibre">Équilibre</a>}
-          {access.role === "network" && <a href="#pilotage">Pilotage</a>}
-          <a href="#detail">Détail</a>
+          {access.role === "network" ? <>
+            <a href="#vue-ensemble">Vue d’ensemble</a>
+            <a href="#pilotage">Groupes</a>
+            <a href="#croissance">Croissance</a>
+            <a href="#conversion">Conversion</a>
+            <a href="#alertes">Alertes</a>
+          </> : <>
+            <a href="#priorites">Aujourd’hui</a>
+            <a href="#resultats">Résultats</a>
+            <a href="#objectif">Objectif</a>
+            <a href="#equilibre">Équilibre</a>
+            <a href="#detail">Détail</a>
+          </>}
           <Link className="meetingModeLink" href={presentationHref}>Présenter en réunion</Link>
         </nav>
 
@@ -192,6 +233,8 @@ export default async function Home({ searchParams }: PageProps) {
           Erreur de connexion Airtable : {dataError}
         </section>
         )}
+
+        {access.role === "network" && data && <NetworkExecutiveOverview data={data} periodLabel={periodLabel} />}
 
         {data && (
           <section className="pendingActionCard" id="priorites" aria-label="Affaires en attente de traitement">
@@ -261,7 +304,7 @@ export default async function Home({ searchParams }: PageProps) {
           <TrendChart eyebrow="REVENU" title="CA gagné dans le temps" points={data.trends} series={[{ key: "revenueWon", label: "CA gagné", color: "#f18748" }]} formatValue={(value) => euro.format(value)} />
         </section>)}
 
-        {access.role === "network" && data && <MaturityChart series={data.maturitySeries} />}
+        {access.role === "network" && data && <div id="croissance"><MaturityChart series={data.maturitySeries} /></div>}
 
         {access.role === "network" && data && <div id="pilotage"><NetworkPilotage data={data} /></div>}
 
