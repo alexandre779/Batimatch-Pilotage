@@ -69,7 +69,7 @@ export function MaturityChart({ series }: { series: MaturitySeries[] }) {
             })}
             {Array.from({ length: horizon }, (_, index) => index + 1).map((month) => (month === 1 || month === horizon || month % (horizon === 24 ? 3 : 2) === 0) && <text key={month} x={x(month)} y={height - 13} textAnchor="middle">M{month}</text>)}
           </svg>
-          {metric === "activeMembers" && <p className="maturityNote">Calcul basé sur la date de début du test des adhérents actuellement actifs. En lecture mensuelle : nouveaux actifs intégrés pendant le mois ; en cumulé : actifs intégrés depuis l’ouverture.</p>}
+          {metric === "activeMembers" && <p className="maturityNote">Calcul basé sur la « Date de création du user » des fiches de type Adhérent actuellement actives. Les adhérents créés avant l’ouverture officielle sont rattachés à M1.</p>}
         </>
       )}
     </section>

@@ -163,7 +163,7 @@ export async function getDashboardData(
   const guestFields = FIELDS.guests;
 
   const [users, groupRecords, opportunities, guests] = await Promise.all([
-    listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.groupLinks, uf.testStartDate]),
+    listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.userType, uf.groupLinks, uf.testStartDate, uf.createdAt]),
     listRecords(TABLES.groups, [gf.name, gf.members, gf.createdAt]),
     listRecords(TABLES.opportunities, [
       of.giver,
@@ -317,6 +317,15 @@ export async function getDashboardData(
     return month >= 1 && month <= 24 ? month : null;
   }
 
+  function membershipMonth(groupId: string, value: unknown) {
+    const openedAt = recordDate(groupRecords.find((group) => group.id === groupId)?.fields[gf.createdAt]);
+    const createdAt = recordDate(value);
+    if (!openedAt || !createdAt) return null;
+    if (createdAt <= openedAt) return 1;
+    const month = Math.floor((createdAt.getTime() - openedAt.getTime()) / (30 * 24 * 60 * 60 * 1000)) + 1;
+    return month >= 1 && month <= 24 ? month : null;
+  }
+
   for (const opportunity of opportunities) {
     const groupId = opportunityGroup(opportunity, "receiver");
     if (!groupId) continue;
@@ -335,11 +344,11 @@ export async function getDashboardData(
   }
 
   for (const user of users) {
-    if (!activeUserIds.has(user.id)) continue;
+    if (!activeUserIds.has(user.id) || asString(user.fields[uf.userType]) !== "Adhérent") continue;
     for (const groupId of userGroups.get(user.id) ?? []) {
       const series = maturityByGroup.get(groupId);
       if (!series) continue;
-      const entryMonth = maturityMonth(groupId, user.fields[uf.testStartDate]);
+      const entryMonth = membershipMonth(groupId, user.fields[uf.createdAt]);
       if (entryMonth && series.points[entryMonth - 1]) series.points[entryMonth - 1].activeMembers += 1;
     }
   }

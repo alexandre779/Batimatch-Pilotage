@@ -23,6 +23,7 @@ export const FIELDS = {
     function: "fldV21zzqCCctM2j1",
     memberStatus: "fldEyukN4YMivIrMU",
     testStartDate: "fldsUrNUBHlVDheTA",
+    createdAt: "fldiq6kU7D5Vpd9V7",
     ownedGroups: "fldNTnQmAbi2ZDB2U",
     groupLinks: "fldzAsPg6OtSd8MvT",
     pilotageRole: "fldGbKRVtEE82xzEU",
