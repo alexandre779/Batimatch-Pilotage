@@ -17,32 +17,13 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install current dependencies
+      - name: Install dependencies
         run: npm install
 
       - name: Check Next.js compatibility with vinext
-        run: npx --yes vinext@latest check
+        run: npx vinext check
 
-      - name: Initialize Cloudflare Workers target
-        run: >-
-          npx --yes vinext@latest init
-          --skip-check
-          --platform=cloudflare
-          --data-cache=kv
-          --image-optimization=cloudflare-images
-
-      - name: Show generated Cloudflare configuration
-        run: |
-          echo '--- PACKAGE_JSON ---'
-          cat package.json
-          echo '--- VITE_CONFIG ---'
-          cat vite.config.ts
-          echo '--- WRANGLER_CONFIG ---'
-          cat wrangler.jsonc
-          echo '--- GITIGNORE ---'
-          cat .gitignore
-
-      - name: Build for Cloudflare Workers with vinext
+      - name: Build minimal Cloudflare Workers target
         run: npm run build:vinext
         env:
           AIRTABLE_TOKEN: pat_ci_placeholder
@@ -52,7 +33,7 @@ jobs:
         run: |
           test -f dist/server/wrangler.json
           test -d dist/client
-          echo "Cloudflare Workers build output is valid"
+          echo "Minimal Cloudflare Workers build output is valid"
 
       - name: Verify original Next.js build still works
         run: npm run build
