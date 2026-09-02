@@ -19,7 +19,7 @@ export function GroupDetail({ group, data }: { group: GroupPerformance; data: Da
     <section className="groupDetail" id="fiche-groupe">
       <div className="groupDetailHero">
         <div><p className="eyebrow">FICHE GROUPE</p><h2>{group.name}</h2><p>Vue opérationnelle complète du groupe sélectionné.</p></div>
-        {health && <div className={`groupHealthBadge health-${health.status}`}><strong>{health.score}/100</strong><span>{health.status === "healthy" ? "Situation saine" : health.status === "watch" ? "À surveiller" : "Action requise"}</span></div>}
+        {health && <div className={`groupHealthBadge health-${health.status}`}><small>Score de vigilance</small><strong>{health.score}/100</strong><span>{health.status === "healthy" ? "Situation saine" : health.status === "watch" ? "À surveiller" : "Action requise"}</span></div>}
       </div>
 
       <div className="groupDetailKpis">

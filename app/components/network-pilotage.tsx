@@ -27,13 +27,13 @@ export function NetworkPilotage({ data }: { data: DashboardData }) {
     <>
       <section className="sectionBlock networkCommand">
         <div className="sectionHeading">
-          <div><p className="eyebrow">SUPERVISION</p><h2>Santé des groupes</h2></div>
+          <div><p className="eyebrow">SUPERVISION</p><h2>Vigilance opérationnelle des groupes</h2></div>
           <span className="comparisonNote">Les groupes nécessitant une action apparaissent en premier</span>
         </div>
         <div className="healthGrid">
           {data.networkHealth.map((group) => (
             <article className={`healthCard health-${group.status}`} key={group.id}>
-              <header><strong>{group.name}</strong><span>{group.score}/100</span></header>
+              <header><strong>{group.name}</strong><span title="Score de vigilance opérationnelle">Vigilance {group.score}/100</span></header>
               <div className="healthStatus"><i />{group.status === "healthy" ? "Situation saine" : group.status === "watch" ? "À surveiller" : "Action requise"}</div>
               <dl>
                 <div><dt>Adhérents actifs</dt><dd>{number.format(group.activeMembers)}</dd></div>

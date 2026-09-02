@@ -64,7 +64,7 @@ export default async function MonthlyReport({ searchParams }: { searchParams: Pr
 
       <section className="reportHighlights">
         <article><p className="eyebrow">FAITS MARQUANTS</p><h2>À retenir</h2><ul><li><strong>{topRevenue?.name ?? "—"}</strong> arrive en tête avec {euro.format(topRevenue?.revenueWon ?? 0)} de CA gagné.</li><li><strong>{topActivity?.name ?? "—"}</strong> est le groupe le plus donneur avec {number.format(topActivity?.opportunitiesSent ?? 0)} affaires envoyées.</li><li><strong>{number.format(data.kpis.pendingTreatment)}</strong> affaires sont encore en attente de première prise en charge.</li></ul></article>
-        <article><p className="eyebrow">VIGILANCE</p><h2>Groupes à accompagner</h2>{criticalGroups.length ? <ul>{criticalGroups.map((group) => <li key={group.id}><strong>{group.name}</strong> — score {group.score}/100, {group.pendingTreatment} affaire(s) à traiter.</li>)}</ul> : <p className="reportEmpty">Aucun groupe en alerte.</p>}</article>
+        <article><p className="eyebrow">VIGILANCE</p><h2>Groupes à accompagner</h2>{criticalGroups.length ? <ul>{criticalGroups.map((group) => <li key={group.id}><strong>{group.name}</strong> — vigilance {group.score}/100, {group.pendingTreatment} affaire(s) à traiter.</li>)}</ul> : <p className="reportEmpty">Aucun groupe en alerte.</p>}</article>
       </section>
 
       <section className="reportSection">

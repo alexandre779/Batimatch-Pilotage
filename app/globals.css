@@ -163,6 +163,7 @@ button:hover { filter: brightness(.96); }
 .groupHealthBadge.health-watch { color: #a76a05; }
 .groupHealthBadge.health-alert { color: #a43d36; }
 .groupHealthBadge strong { display: block; font-family: Montserrat, Arial, sans-serif; font-size: 24px; }
+.groupHealthBadge small { display: block; margin-bottom: 2px; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
 .groupHealthBadge span { display: block; margin-top: 3px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .groupDetailKpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: white; border: 1px solid var(--line); border-top: 0; }
 .groupDetailKpis > div { min-width: 0; padding: 18px; border-right: 1px solid var(--line); }
