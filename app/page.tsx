@@ -139,7 +139,7 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
 
         <section className="sectionBlock">
-          <div className="sectionHeading"><div><p className="eyebrow">DYNAMIQUE</p><h2>Activité du réseau</h2></div></div>
+          <div className="sectionHeading"><div><p className="eyebrow">DYNAMIQUE</p><h2>{access.role === "president" ? "Activité du groupe" : "Activité du réseau"}</h2></div></div>
           <div className="kpis kpisSecondary">
             <Kpi label="Membres actifs" value={number.format(kpis?.activeMembers ?? 0)} />
             <Kpi label="Opportunités envoyées" value={number.format(kpis?.opportunitiesSent ?? 0)} current={kpis?.opportunitiesSent} previous={previous?.opportunitiesSent} />
