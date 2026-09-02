@@ -16,18 +16,6 @@ function NetworkPresentation({ data, period, backHref }: { data: Awaited<ReturnT
   const topRevenue = [...data.groups].sort((a, b) => b.revenueWon - a.revenueWon).slice(0, 3);
   const topSent = [...data.groups].sort((a, b) => b.opportunitiesSent - a.opportunitiesSent).slice(0, 3);
   const maxRevenue = topRevenue[0]?.revenueWon || 1;
-  const commonMaturityMonth = Math.min(12, ...data.maturitySeries.map((series) => series.points.length));
-  const maturity = data.maturitySeries.map((series) => {
-    const comparablePoints = series.points.slice(0, commonMaturityMonth);
-    return {
-      id: series.id,
-      name: series.name,
-      revenue: comparablePoints.reduce((sum, point) => sum + point.revenue, 0),
-      opportunities: comparablePoints.reduce((sum, point) => sum + point.opportunities, 0),
-      activeMembers: comparablePoints.reduce((sum, point) => sum + point.activeMembers, 0)
-    };
-  }).sort((a, b) => b.revenue - a.revenue);
-  const maxMaturityRevenue = Math.max(1, ...maturity.map((series) => series.revenue));
   const revenueTarget = data.groupObjectives.reduce((sum, group) => sum + group.monthlyRevenue.target, 0);
   const revenueActual = data.groupObjectives.reduce((sum, group) => sum + group.monthlyRevenue.actual, 0);
   const targetProgress = revenueTarget ? revenueActual / revenueTarget : 0;
@@ -36,7 +24,7 @@ function NetworkPresentation({ data, period, backHref }: { data: Awaited<ReturnT
 
   return <main className="presentationMode networkPresentationMode">
     <PresentationControls backHref={backHref} />
-    <nav className="presentationDots" aria-label="Navigation de la présentation"><a href="#slide-1">1</a><a href="#slide-2">2</a><a href="#slide-3">3</a><a href="#slide-4">4</a><a href="#slide-5">5</a></nav>
+    <nav className="presentationDots" aria-label="Navigation de la présentation"><a href="#slide-1">1</a><a href="#slide-2">2</a><a href="#slide-3">3</a><a href="#slide-4">4</a></nav>
 
     <section className="presentationSlide presentationIntro" id="slide-1">
       <header className="presentationBrand"><span><Image src="/brand/batimatch-mark.png" alt="" width={56} height={56} priority /></span><strong>Bâtimatch</strong></header>
@@ -56,25 +44,16 @@ function NetworkPresentation({ data, period, backHref }: { data: Awaited<ReturnT
       </div>
     </section>
 
-    <section className="presentationSlide networkGrowthSlide" id="slide-3">
-      <div className="presentationSlideHeader"><div><p className="eyebrow">02 · CROISSANCE COMPARÉE</p><h2>La performance au même stade</h2><p className="networkSlideExplanation">Tous les groupes sont comparés sur leurs {commonMaturityMonth === 1 ? "30 premiers jours" : `${commonMaturityMonth} premiers mois`}, quelle que soit leur date d’ouverture.</p></div><span>Au terme de M{commonMaturityMonth}</span></div>
-      <div className="networkGrowthList">{maturity.map((series) => <article key={series.id}>
-        <header><strong>{series.name}</strong><span>M{commonMaturityMonth}</span></header>
-        <div className="networkGrowthTrack"><i style={{ width: `${series.revenue / maxMaturityRevenue * 100}%` }} /></div>
-        <footer><strong>{euro.format(series.revenue)}</strong><span>{number.format(series.activeMembers)} adhérent{series.activeMembers > 1 ? "s" : ""} · {number.format(series.opportunities)} affaire{series.opportunities > 1 ? "s" : ""}</span></footer>
-      </article>)}</div>
-    </section>
-
-    <section className="presentationSlide networkLeadersSlide" id="slide-4">
-      <div className="presentationSlideHeader"><div><p className="eyebrow">03 · GROUPES MOTEURS</p><h2>Ceux qui donnent l’impulsion</h2></div><span>{periodText}</span></div>
+    <section className="presentationSlide networkLeadersSlide" id="slide-3">
+      <div className="presentationSlideHeader"><div><p className="eyebrow">02 · GROUPES MOTEURS</p><h2>Ceux qui donnent l’impulsion</h2></div><span>{periodText}</span></div>
       <div className="networkLeaderColumns">
         <article><h3>Chiffre d’affaires gagné</h3>{topRevenue.map((group, index) => <div key={group.id}><b>{index + 1}</b><span><strong>{group.name}</strong><i><em style={{ width: `${group.revenueWon / maxRevenue * 100}%` }} /></i></span><strong>{euro.format(group.revenueWon)}</strong></div>)}</article>
         <article><h3>Affaires envoyées</h3>{topSent.map((group, index) => <div key={group.id}><b>{index + 1}</b><span><strong>{group.name}</strong><small>{number.format(group.opportunitiesReceived)} reçues</small></span><strong>{number.format(group.opportunitiesSent)}</strong></div>)}</article>
       </div>
     </section>
 
-    <section className="presentationSlide presentationGoalSlide networkCapSlide" id="slide-5">
-      <div className="presentationSlideHeader"><div><p className="eyebrow">04 · CAP DU RÉSEAU</p><h2>Les priorités du prochain mois</h2></div><span>{alertGroups} critique{alertGroups > 1 ? "s" : ""} · {watchGroups} à accompagner</span></div>
+    <section className="presentationSlide presentationGoalSlide networkCapSlide" id="slide-4">
+      <div className="presentationSlideHeader"><div><p className="eyebrow">03 · CAP DU RÉSEAU</p><h2>Les priorités du prochain mois</h2></div><span>{alertGroups} critique{alertGroups > 1 ? "s" : ""} · {watchGroups} à accompagner</span></div>
       <div className="networkCapGrid">
         <div className="meetingGoalRing" style={{ background: `conic-gradient(#f18748 ${Math.min(1, targetProgress) * 360}deg, rgba(255,255,255,.14) 0)` }}><div><strong>{Math.round(targetProgress * 100)}<small>%</small></strong><span>des objectifs mensuels</span></div></div>
         <div className="networkCapNumbers"><div><span>Objectif cumulé</span><strong>{revenueTarget ? euro.format(revenueTarget) : "À renseigner"}</strong></div><div><span>Déjà signé</span><strong>{euro.format(revenueActual)}</strong></div><div><span>Affaires à traiter</span><strong>{number.format(data.kpis.pendingTreatment)}</strong></div></div>
