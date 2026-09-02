@@ -1,4 +1,5 @@
 import "server-only";
+import { env as runtimeEnv } from "node:process";
 import { AIRTABLE_BASE_ID } from "./config";
 
 type AirtableRecord = {
@@ -13,9 +14,13 @@ type AirtableListResponse = {
 };
 
 function getToken() {
-  const token = process.env.AIRTABLE_TOKEN;
+  const token = runtimeEnv.AIRTABLE_TOKEN;
   if (!token) throw new Error("AIRTABLE_TOKEN is not configured");
   return token;
+}
+
+function getBaseId() {
+  return runtimeEnv.AIRTABLE_BASE_ID ?? AIRTABLE_BASE_ID;
 }
 
 export async function listRecords(
@@ -35,7 +40,7 @@ export async function listRecords(
     if (offset) params.set("offset", offset);
 
     const response = await fetch(
-      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}?${params.toString()}`,
+      `https://api.airtable.com/v0/${getBaseId()}/${tableId}?${params.toString()}`,
       {
         headers: { Authorization: `Bearer ${getToken()}` },
         next: { revalidate: 60 }
