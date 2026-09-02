@@ -29,6 +29,7 @@ export async function listRecords(
   do {
     const params = new URLSearchParams();
     fieldIds.forEach((fieldId) => params.append("fields[]", fieldId));
+    params.set("returnFieldsByFieldId", "true");
     if (options.filterByFormula) params.set("filterByFormula", options.filterByFormula);
     if (options.maxRecords) params.set("maxRecords", String(options.maxRecords));
     if (offset) params.set("offset", offset);
