@@ -601,7 +601,9 @@ export async function getDashboardData(
       { key: "realistic", label: "Réaliste", multiplier: 1 },
       { key: "ambitious", label: "Ambitieux", multiplier: 1.15 }
     ];
-    const wins = gapAfterPipeline > 0 ? Math.ceil(gapAfterPipeline / averageWonAmount) : 0;
+    // Le pipeline est une probabilité de revenu, pas du chiffre d'affaires déjà signé.
+    // Il éclaire la faisabilité de l'objectif mais ne doit pas annuler le plan d'action.
+    const wins = remaining > 0 ? Math.ceil(remaining / averageWonAmount) : 0;
     const scenarios = scenarioConfig.map(({ key, label, multiplier }) => {
       const quoteConversion = Math.max(0.12, Math.min(0.9, historicalQuoteConversion * multiplier));
       const closing = Math.max(0.05, Math.min(0.8, historicalClosing * multiplier));
