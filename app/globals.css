@@ -86,6 +86,29 @@ button:hover { filter: brightness(.96); }
 .maturityLegend i { width: 9px; height: 9px; border-radius: 50%; }
 .maturityChart { display: block; width: 100%; min-height: 300px; overflow: visible; }
 .maturityChart text { fill: var(--muted); font-size: 10px; }
+.maturityNote { margin: 8px 0 0; color: var(--muted); font-size: 11px; font-style: italic; }
+.networkMapCard { margin-bottom: 28px; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.networkMapHeader { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+.networkMapHeader p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+.networkMapHeader > span { padding: 7px 10px; color: #a84f20; background: #fff0e7; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.networkMapLayout { margin-top: 16px; display: grid; grid-template-columns: minmax(340px, .8fr) minmax(480px, 1.2fr); gap: 32px; align-items: center; }
+.franceMap { width: 100%; max-height: 520px; overflow: visible; }
+.franceShape { fill: #f7eee8; stroke: #d7b7a3; stroke-width: 2; }
+.franceDetail { fill: none; stroke: #ead8cc; stroke-width: 1; stroke-dasharray: 4 7; }
+.mapMarkerLink { cursor: pointer; }
+.mapMarkerHalo { fill: rgba(241,135,72,.2); transition: r .2s ease, fill .2s ease; }
+.mapMarker { fill: var(--accent); stroke: white; stroke-width: 3; filter: drop-shadow(0 4px 6px rgba(16,47,79,.24)); transition: fill .2s ease; }
+.mapMarkerCount { fill: white; font-family: Montserrat, Arial, sans-serif; font-size: 11px; font-weight: 900; pointer-events: none; }
+.mapMarkerLink:hover .mapMarkerHalo { fill: rgba(241,135,72,.36); }
+.mapMarkerLink:hover .mapMarker { fill: var(--dark); }
+.mapGroupList { display: grid; gap: 8px; }
+.mapGroupRow { display: grid; grid-template-columns: 12px minmax(150px, 1fr) minmax(74px, auto) minmax(105px, auto); gap: 12px; align-items: center; padding: 14px; color: var(--text); text-decoration: none; border: 1px solid var(--line); border-radius: 10px; transition: border-color .2s ease, transform .2s ease, background .2s ease; }
+.mapGroupRow:hover { border-color: var(--accent); background: #fff8f3; transform: translateX(3px); }
+.mapGroupDot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; }
+.mapGroupRow > span { min-width: 0; }
+.mapGroupRow strong, .mapGroupRow small { display: block; }
+.mapGroupRow strong { overflow: hidden; text-overflow: ellipsis; font-family: Montserrat, Arial, sans-serif; font-size: 13px; white-space: nowrap; }
+.mapGroupRow small { margin-top: 3px; color: var(--muted); font-size: 10px; }
 .podiumSection { margin-top: 28px; }
 .podiumGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .podiumCard { min-width: 0; padding: 22px 22px 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
@@ -122,7 +145,7 @@ tbody tr:hover { background: #fff8f3; }
 tbody tr:last-child td { border-bottom: 0; }
 .empty { color: var(--muted); text-align: center; padding: 38px; }
 footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: center; }
-@media (max-width: 1100px) { .kpisPrimary, .kpisSecondary { grid-template-columns: repeat(2, 1fr); } .charts, .podiumGrid { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .kpisPrimary, .kpisSecondary { grid-template-columns: repeat(2, 1fr); } .charts, .podiumGrid, .networkMapLayout { grid-template-columns: 1fr; } .franceMap { max-height: 430px; } }
 @media (max-width: 760px) {
   .brandbar, .heroContent { padding-left: 20px; padding-right: 20px; }
   .brandbar > p, .heroAccent { display: none; }
@@ -142,4 +165,8 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
   .maturityControls { width: 100%; }
   .maturityControls label { min-width: 0; flex: 1; }
   .maturityChart { width: 760px; }
+  .networkMapCard { padding: 18px 14px; }
+  .networkMapLayout { gap: 12px; }
+  .mapGroupRow { grid-template-columns: 12px 1fr auto; }
+  .mapGroupRow > span:last-child { display: none; }
 }

@@ -12,6 +12,9 @@ export type DashboardDateRange = {
 export type GroupPerformance = {
   id: string;
   name: string;
+  city: string;
+  department: string;
+  region: string;
   memberCount: number;
   opportunitiesSent: number;
   opportunitiesReceived: number;
@@ -164,7 +167,7 @@ export async function getDashboardData(
 
   const [users, groupRecords, opportunities, guests] = await Promise.all([
     listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.userType, uf.groupLinks, uf.testStartDate, uf.createdAt]),
-    listRecords(TABLES.groups, [gf.name, gf.members, gf.createdAt]),
+    listRecords(TABLES.groups, [gf.name, gf.members, gf.createdAt, gf.city, gf.department, gf.region]),
     listRecords(TABLES.opportunities, [
       of.giver,
       of.receiver,
@@ -278,6 +281,9 @@ export async function getDashboardData(
     return {
       id: group.id,
       name: asString(group.fields[gf.name]),
+      city: asString(group.fields[gf.city]),
+      department: asString(group.fields[gf.department]),
+      region: asString(group.fields[gf.region]),
       memberCount: asIds(group.fields[gf.members]).length,
       opportunitiesSent: kpis.opportunitiesSent,
       opportunitiesReceived: kpis.opportunitiesReceived,
