@@ -48,7 +48,10 @@ export async function listRecords(
     );
 
     if (!response.ok) {
-      throw new Error(`Airtable request failed: ${response.status} ${response.statusText}`);
+      const detail = (await response.text()).slice(0, 500);
+      throw new Error(
+        `Airtable request failed: ${response.status} ${response.statusText}${detail ? ` - ${detail}` : ""}`
+      );
     }
 
     const page = (await response.json()) as AirtableListResponse;
