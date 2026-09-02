@@ -34,7 +34,10 @@ async function verifyAccessToken(token: string, teamDomain: string, audience: st
   const payload = decodeJson<AccessPayload>(parts[1]);
   if (header.alg !== "RS256" || !header.kid) throw new Error("Jeton Cloudflare Access invalide");
 
-  const issuer = teamDomain.replace(/\/$/, "");
+  const issuer = (teamDomain.startsWith("http://") || teamDomain.startsWith("https://")
+    ? teamDomain
+    : `https://${teamDomain}`
+  ).replace(/\/$/, "");
   const now = Math.floor(Date.now() / 1000);
   const audiences = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   if (payload.iss !== issuer || !audiences.includes(audience) || !payload.exp || payload.exp <= now || (payload.nbf && payload.nbf > now)) {
