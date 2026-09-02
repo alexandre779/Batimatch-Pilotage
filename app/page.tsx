@@ -40,12 +40,12 @@ export default async function Home({ searchParams }: PageProps) {
     : "30d";
 
   let data: Awaited<ReturnType<typeof getDashboardData>> | null = null;
-  let dataError = false;
+  let dataError: string | null = null;
 
   try {
     data = await getDashboardData(period, groupId);
-  } catch {
-    dataError = true;
+  } catch (error) {
+    dataError = error instanceof Error ? error.message : "Erreur inconnue lors du chargement Airtable";
   }
 
   const groups = data?.groups ?? [];
@@ -76,7 +76,7 @@ export default async function Home({ searchParams }: PageProps) {
 
       {dataError && (
         <section className="notice">
-          La connexion Airtable est prête. Il manque AIRTABLE_TOKEN dans l’environnement de déploiement pour afficher les données réelles.
+          Erreur de connexion Airtable : {dataError}
         </section>
       )}
 
