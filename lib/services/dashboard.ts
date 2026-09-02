@@ -49,11 +49,24 @@ export type TrendPoint = {
   revenueWon: number;
 };
 
+export type LeaderboardEntry = {
+  id: string;
+  name: string;
+  count: number;
+  amount: number;
+};
+
 export type DashboardData = {
   groups: GroupPerformance[];
   kpis: DashboardKpis;
   previousKpis: DashboardKpis | null;
   trends: TrendPoint[];
+  leaderboards: {
+    donorsByCount: LeaderboardEntry[];
+    donorsByAmount: LeaderboardEntry[];
+    signersByCount: LeaderboardEntry[];
+    signersByAmount: LeaderboardEntry[];
+  };
   selectedGroupName: string | null;
 };
 
@@ -126,7 +139,7 @@ export async function getDashboardData(
   const of = FIELDS.opportunities;
 
   const [users, groupRecords, opportunities] = await Promise.all([
-    listRecords(TABLES.users, [uf.memberStatus, uf.groupLinks]),
+    listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.groupLinks]),
     listRecords(TABLES.groups, [gf.name, gf.members]),
     listRecords(TABLES.opportunities, [
       of.giver,
@@ -176,6 +189,7 @@ export async function getDashboardData(
     : [];
 
   const groupNames = new Map(groupRecords.map((g) => [g.id, asString(g.fields[gf.name])]));
+  const userNames = new Map(users.map((user) => [user.id, asString(user.fields[uf.displayName]) || "Membre sans nom"]));
 
   function opportunityGroup(opportunity: (typeof opportunities)[number], role: "giver" | "receiver") {
     const userId = firstId(opportunity.fields[role === "giver" ? of.giver : of.receiver]);
@@ -254,6 +268,41 @@ export async function getDashboardData(
 
   const validSelectedGroupId = selectedGroupId !== "all" && groupNames.has(selectedGroupId) ? selectedGroupId : null;
 
+  function leaderboard(source: typeof opportunities, role: "giver" | "receiver", amountField: string, wonOnly = false) {
+    const totals = new Map<string, LeaderboardEntry>();
+
+    for (const opportunity of source) {
+      if (wonOnly && asString(opportunity.fields[of.stage]) !== WON_STAGE) continue;
+      if (validSelectedGroupId && opportunityGroup(opportunity, role) !== validSelectedGroupId) continue;
+      const userId = firstId(opportunity.fields[role === "giver" ? of.giver : of.receiver]);
+      if (!userId) continue;
+      const current = totals.get(userId) ?? {
+        id: userId,
+        name: userNames.get(userId) ?? "Membre sans nom",
+        count: 0,
+        amount: 0
+      };
+      current.count += 1;
+      current.amount += asNumber(opportunity.fields[amountField]);
+      totals.set(userId, current);
+    }
+
+    return [...totals.values()];
+  }
+
+  const donorTotals = leaderboard(filteredOpportunities, "giver", of.opportunityAmount);
+  const signerTotals = leaderboard(closedOpportunities, "receiver", of.quoteAmountHT, true);
+  const byCount = (a: LeaderboardEntry, b: LeaderboardEntry) =>
+    b.count - a.count || b.amount - a.amount || a.name.localeCompare(b.name, "fr");
+  const byAmount = (a: LeaderboardEntry, b: LeaderboardEntry) =>
+    b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, "fr");
+  const leaderboards = {
+    donorsByCount: [...donorTotals].sort(byCount).slice(0, 3),
+    donorsByAmount: [...donorTotals].sort(byAmount).slice(0, 3),
+    signersByCount: [...signerTotals].sort(byCount).slice(0, 3),
+    signersByAmount: [...signerTotals].sort(byAmount).slice(0, 3)
+  };
+
   const trendMap = new Map<string, TrendPoint>();
   const trendDuration = bounds.start ? bounds.end.getTime() - bounds.start.getTime() : Number.POSITIVE_INFINITY;
   const useWeeks = trendDuration <= 120 * 24 * 60 * 60 * 1000;
@@ -301,6 +350,7 @@ export async function getDashboardData(
     kpis: compute(filteredOpportunities, closedOpportunities, quotedOpportunities, validSelectedGroupId),
     previousKpis: bounds.previousStart ? compute(previousOpportunities, previousClosedOpportunities, previousQuotedOpportunities, validSelectedGroupId, false) : null,
     trends: [...trendMap.values()].sort((a, b) => a.key.localeCompare(b.key)),
+    leaderboards,
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }

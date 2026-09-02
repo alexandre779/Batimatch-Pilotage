@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { headers } from "next/headers";
-import { getDashboardData, type DashboardPeriod } from "@/lib/services/dashboard";
+import { getDashboardData, type DashboardPeriod, type LeaderboardEntry } from "@/lib/services/dashboard";
 import { getPilotageAccess } from "@/lib/auth/access";
 import { DashboardFilters } from "@/app/components/dashboard-filters";
 import { TrendChart } from "@/app/components/trend-chart";
@@ -37,6 +37,39 @@ function Kpi({ label, value, hint, current, previous, inverse = false, featured 
         {hint && <small>{hint}</small>}
       </div>
       <div className="kpiValue"><strong>{value}</strong>{change !== null && <small className={positive ? "delta positive" : "delta negative"}>{change >= 0 ? "+" : ""}{percent.format(change)}</small>}</div>
+    </article>
+  );
+}
+
+function Podium({ title, subtitle, entries, metric, amountLabel = "gagnés" }: { title: string; subtitle: string; entries: LeaderboardEntry[]; metric: "count" | "amount"; amountLabel?: string }) {
+  if (!entries.length) {
+    return (
+      <article className="podiumCard">
+        <div className="podiumHeader"><h3>{title}</h3><p>{subtitle}</p></div>
+        <p className="podiumEmpty">Aucune affaire sur cette période.</p>
+      </article>
+    );
+  }
+
+  const places = [entries[1], entries[0], entries[2]].filter((entry): entry is LeaderboardEntry => Boolean(entry));
+  return (
+    <article className="podiumCard">
+      <div className="podiumHeader"><h3>{title}</h3><p>{subtitle}</p></div>
+      <ol className="podiumList">
+        {places.map((entry) => {
+          const rank = entries.findIndex((candidate) => candidate.id === entry.id) + 1;
+          return (
+            <li className={`podiumPlace podiumRank${rank}`} key={entry.id}>
+              <div className="podiumPerson">
+                <span className="podiumMedal" aria-label={`${rank}${rank === 1 ? "er" : "e"}`}>{rank}</span>
+                <strong>{entry.name}</strong>
+                <small>{metric === "count" ? euro.format(entry.amount) : `${number.format(entry.count)} ${entry.count === 1 ? "affaire" : "affaires"}`}</small>
+              </div>
+              <div className="podiumStep"><strong>{metric === "count" ? number.format(entry.count) : euro.format(entry.amount)}</strong><small>{metric === "count" ? (entry.count === 1 ? "affaire" : "affaires") : amountLabel}</small></div>
+            </li>
+          );
+        })}
+      </ol>
     </article>
   );
 }
@@ -159,6 +192,21 @@ export default async function Home({ searchParams }: PageProps) {
           { key: "revenueWon", label: "CA gagné", color: "#f18748" }
         ]} formatValue={(value) => euro.format(value)} />
         </section>}
+
+        {access.role === "president" && data && (
+          <section className="sectionBlock podiumSection">
+            <div className="sectionHeading">
+              <div><p className="eyebrow">CLASSEMENT</p><h2>Les champions du groupe</h2></div>
+              <span className="comparisonNote">Sur la période sélectionnée</span>
+            </div>
+            <div className="podiumGrid">
+              <Podium title="Top donneurs — nombre" subtitle="Plus grand nombre d’affaires envoyées" entries={data.leaderboards.donorsByCount} metric="count" />
+              <Podium title="Top donneurs — montant" subtitle="Plus fort montant d’affaires transmis" entries={data.leaderboards.donorsByAmount} metric="amount" amountLabel="transmis" />
+              <Podium title="Top signeurs — nombre" subtitle="Plus grand nombre d’affaires gagnées" entries={data.leaderboards.signersByCount} metric="count" />
+              <Podium title="Top signeurs — montant" subtitle="Plus fort chiffre d’affaires gagné" entries={data.leaderboards.signersByAmount} metric="amount" />
+            </div>
+          </section>
+        )}
 
         <section className="panel">
         <div className="panelTitle">
