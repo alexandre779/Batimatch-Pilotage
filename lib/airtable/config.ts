@@ -22,6 +22,7 @@ export const FIELDS = {
     userType: "fldb4yzNQaHMM00rC",
     function: "fldV21zzqCCctM2j1",
     memberStatus: "fldEyukN4YMivIrMU",
+    testStartDate: "fldsUrNUBHlVDheTA",
     ownedGroups: "fldNTnQmAbi2ZDB2U",
     groupLinks: "fldzAsPg6OtSd8MvT",
     pilotageRole: "fldGbKRVtEE82xzEU",
@@ -34,6 +35,10 @@ export const FIELDS = {
     receivedVolume: "fld1tywjw2wDEWSOR",
     wonRevenue: "fld6ozyQHqTsslYW3",
     lastLogin: "fldK2xWsvVsBWFn6T"
+  },
+  guests: {
+    eventStartDate: "fldneXYqOxjSrr0f1",
+    linkedUsers: "fldJ7M7FMhexTlo5C"
   },
   groups: {
     name: "fldYE5skYY83xqu5x",

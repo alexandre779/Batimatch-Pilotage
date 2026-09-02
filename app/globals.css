@@ -50,6 +50,8 @@ button:hover { filter: brightness(.96); }
 .kpis { display: grid; gap: 12px; }
 .kpisPrimary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .kpisSecondary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.recruitmentKpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.recruitmentKpis .kpi { min-height: 126px; border-top: 4px solid var(--accent); }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-height: 116px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
 .kpiFeatured { min-height: 142px; border-top: 4px solid var(--accent); }
 .kpiFeatured:first-child { background: var(--dark); border-color: var(--dark); color: white; }
@@ -117,7 +119,7 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
   .dateRange { grid-template-columns: 1fr 1fr; }
   .filterIntro { padding: 4px 2px 8px; }
   .sectionHeading { align-items: start; flex-direction: column; gap: 6px; }
-  .kpisPrimary, .kpisSecondary { grid-template-columns: 1fr; }
+  .kpisPrimary, .kpisSecondary, .recruitmentKpis { grid-template-columns: 1fr; }
   .kpiFeatured { min-height: 126px; }
   .podiumCard { padding-left: 14px; padding-right: 14px; }
   .podiumPerson strong { font-size: 11px; }

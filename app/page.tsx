@@ -194,6 +194,19 @@ export default async function Home({ searchParams }: PageProps) {
         </section>}
 
         {access.role === "president" && data && (
+          <section className="sectionBlock">
+            <div className="sectionHeading">
+              <div><p className="eyebrow">DÉVELOPPEMENT</p><h2>Recrutement du groupe</h2></div>
+              <span className="comparisonNote">Sur la période sélectionnée</span>
+            </div>
+            <div className="kpis recruitmentKpis">
+              <Kpi label="Nouveaux entrants" value={number.format(data.development.newMembers)} hint="selon la date de début du test" current={data.development.newMembers} previous={data.previousDevelopment?.newMembers} />
+              <Kpi label="Invités" value={number.format(data.development.guests)} hint="invités aux événements du groupe" current={data.development.guests} previous={data.previousDevelopment?.guests} />
+            </div>
+          </section>
+        )}
+
+        {access.role === "president" && data && (
           <section className="sectionBlock podiumSection">
             <div className="sectionHeading">
               <div><p className="eyebrow">CLASSEMENT</p><h2>Les champions du groupe</h2></div>

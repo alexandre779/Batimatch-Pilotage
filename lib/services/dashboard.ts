@@ -67,6 +67,14 @@ export type DashboardData = {
     signersByCount: LeaderboardEntry[];
     signersByAmount: LeaderboardEntry[];
   };
+  development: {
+    newMembers: number;
+    guests: number;
+  };
+  previousDevelopment: {
+    newMembers: number;
+    guests: number;
+  } | null;
   selectedGroupName: string | null;
 };
 
@@ -137,9 +145,10 @@ export async function getDashboardData(
   const uf = FIELDS.users;
   const gf = FIELDS.groups;
   const of = FIELDS.opportunities;
+  const guestFields = FIELDS.guests;
 
-  const [users, groupRecords, opportunities] = await Promise.all([
-    listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.groupLinks]),
+  const [users, groupRecords, opportunities, guests] = await Promise.all([
+    listRecords(TABLES.users, [uf.displayName, uf.memberStatus, uf.groupLinks, uf.testStartDate]),
     listRecords(TABLES.groups, [gf.name, gf.members]),
     listRecords(TABLES.opportunities, [
       of.giver,
@@ -150,7 +159,8 @@ export async function getDashboardData(
       of.quoteDate,
       of.opportunityAmount,
       of.quoteAmountHT
-    ])
+    ]),
+    listRecords(TABLES.guests, [guestFields.eventStartDate, guestFields.linkedUsers])
   ]);
 
   const userGroups = new Map<string, string[]>();
@@ -303,6 +313,27 @@ export async function getDashboardData(
     signersByAmount: [...signerTotals].sort(byAmount).slice(0, 3)
   };
 
+  function firstDateValue(value: unknown) {
+    if (typeof value === "string") return value;
+    return Array.isArray(value) ? value.find((item): item is string => typeof item === "string") : undefined;
+  }
+
+  function development(start: Date | null, end: Date | null) {
+    const belongsToSelectedGroup = (userId: string) =>
+      !validSelectedGroupId || userGroups.get(userId)?.includes(validSelectedGroupId);
+    const newMembers = users.filter((user) => {
+      const testStartDate = user.fields[uf.testStartDate];
+      return belongsToSelectedGroup(user.id) && Boolean(recordDate(testStartDate)) && isInPeriod(testStartDate, start, end);
+    }).length;
+    const guestCount = guests.filter((guest) => {
+      const linkedUserIds = asIds(guest.fields[guestFields.linkedUsers]);
+      const eventStartDate = firstDateValue(guest.fields[guestFields.eventStartDate]);
+      return linkedUserIds.some(belongsToSelectedGroup) &&
+        Boolean(recordDate(eventStartDate)) && isInPeriod(eventStartDate, start, end);
+    }).length;
+    return { newMembers, guests: guestCount };
+  }
+
   const trendMap = new Map<string, TrendPoint>();
   const trendDuration = bounds.start ? bounds.end.getTime() - bounds.start.getTime() : Number.POSITIVE_INFINITY;
   const useWeeks = trendDuration <= 120 * 24 * 60 * 60 * 1000;
@@ -351,6 +382,8 @@ export async function getDashboardData(
     previousKpis: bounds.previousStart ? compute(previousOpportunities, previousClosedOpportunities, previousQuotedOpportunities, validSelectedGroupId, false) : null,
     trends: [...trendMap.values()].sort((a, b) => a.key.localeCompare(b.key)),
     leaderboards,
+    development: development(bounds.start, bounds.end),
+    previousDevelopment: bounds.previousStart ? development(bounds.previousStart, bounds.previousEnd) : null,
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }
