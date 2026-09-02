@@ -50,9 +50,10 @@ select, input { width: 100%; background: var(--surface); color: var(--text); }
 button { border-color: var(--accent); background: var(--accent); color: white; cursor: pointer; font-weight: 800; }
 button:hover { filter: brightness(.96); }
 .notice { background: #fff4eb; border: 1px solid #f2c49f; border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; }
-.networkToolbar { margin: -12px 0 22px; display: flex; justify-content: end; }
+.networkToolbar { margin: -12px 0 22px; display: flex; justify-content: end; gap: 8px; }
 .networkToolbar a, .reportActions a { color: var(--text); font-size: 12px; font-weight: 800; text-decoration: none; }
 .networkToolbar a { padding: 10px 14px; background: white; border: 1px solid var(--line); border-radius: 9px; }
+.networkToolbar .networkPresentationLink { color: white; background: var(--accent); border-color: var(--accent); }
 .networkExecutive { margin-bottom: 30px; padding: 27px; color: white; background: linear-gradient(135deg, #102f4f 0%, #173d62 72%, #214d74 100%); border-radius: 16px; box-shadow: 0 16px 40px rgba(16,47,79,.17); }
 .networkExecutiveHeader { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .networkExecutiveHeader h2 { font-size: 29px; }
@@ -262,8 +263,9 @@ button:hover { filter: brightness(.96); }
 .healthCard dl div { padding-top: 9px; border-top: 1px solid var(--line); }
 .healthCard dt { color: var(--muted); font-size: 10px; }
 .healthCard dd { margin: 3px 0 0; font-family: Montserrat, Arial, sans-serif; font-size: 17px; font-weight: 800; }
-.networkMatrix { padding: 25px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
-.networkMatrix .sectionHeading p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+.networkMatrix { background: var(--surface); }
+.networkMatrixMeta { display: flex; align-items: center; justify-content: space-between; gap: 18px; color: var(--muted); font-size: 10px; }
+.networkMatrixMeta strong { color: var(--text); }
 .networkMatrixWrap { margin-top: 20px; overflow-x: auto; }
 .networkMatrix table { min-width: 960px; }
 .networkMatrix th { padding: 11px 10px; font-size: 9px; }
@@ -313,6 +315,9 @@ button:hover { filter: brightness(.96); }
 .drawerFullLink { margin-top: 27px; padding: 14px 16px; display: flex; justify-content: space-between; color: white; background: var(--dark); border-radius: 9px; font-size: 12px; font-weight: 800; text-decoration: none; }
 .drawerFullLink:hover, .drawerFullLink:focus-visible { background: var(--accent); outline: none; }
 .networkSplit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.networkSplit .collapsibleBlock { margin-bottom: 0; }
+.networkSplit .collapsibleContent { height: calc(100% - 1px); }
+.networkSplit .networkPanel { height: 100%; }
 .networkPanel { padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .networkPanelHeader > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
 .alertList { max-height: 285px; margin-top: 18px; overflow-y: auto; }
@@ -530,12 +535,50 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
 .meetingPodium li > div small { margin-top: 2px; color: var(--muted); font-size: 8px; }
 .meetingPodium .meetingPodiumEmpty { display: block; padding: 20px 0; color: var(--muted); font-size: 10px; }
 .meetingClosing { margin-top: 35px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 11px; }
+.networkGrowthSlide { background: white; }
+.networkGrowthList { display: grid; gap: clamp(10px,1.6vh,18px); }
+.networkGrowthList article { padding: 15px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 8px 24px rgba(16,47,79,.05); }
+.networkGrowthList header, .networkGrowthList footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.networkGrowthList header strong { font-family: Montserrat,Arial,sans-serif; font-size: 13px; }
+.networkGrowthList header span { padding: 4px 7px; color: var(--accent); background: #fff0e7; border-radius: 999px; font-size: 9px; font-weight: 900; }
+.networkGrowthTrack { height: 10px; margin: 10px 0; overflow: hidden; background: var(--bg); border-radius: 999px; }
+.networkGrowthTrack i { height: 100%; display: block; background: linear-gradient(90deg,var(--dark),var(--accent)); border-radius: inherit; }
+.networkGrowthList footer > strong { font-family: Montserrat,Arial,sans-serif; font-size: 17px; }
+.networkGrowthList footer span { color: var(--muted); font-size: 9px; }
+.networkLeadersSlide { background: var(--bg); }
+.networkLeaderColumns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.networkLeaderColumns > article { padding: 25px; background: white; border: 1px solid var(--line); border-top: 5px solid var(--accent); border-radius: 14px; box-shadow: 0 14px 35px rgba(16,47,79,.08); }
+.networkLeaderColumns > article:last-child { border-top-color: var(--dark); }
+.networkLeaderColumns h3 { margin: 0 0 17px; font-family: Montserrat,Arial,sans-serif; font-size: 18px; }
+.networkLeaderColumns article > div { min-height: 76px; display: grid; grid-template-columns: 32px minmax(0,1fr) auto; align-items: center; gap: 12px; border-top: 1px solid var(--line); }
+.networkLeaderColumns article > div > b { width: 27px; height: 27px; display: grid; place-items: center; color: white; background: var(--dark); border-radius: 50%; font-size: 10px; }
+.networkLeaderColumns article > div:first-of-type > b { background: var(--accent); }
+.networkLeaderColumns article > div > span > strong, .networkLeaderColumns article > div > span > small { display: block; }
+.networkLeaderColumns article > div > span > strong { font-size: 12px; }
+.networkLeaderColumns article > div > span > small { margin-top: 4px; color: var(--muted); font-size: 9px; }
+.networkLeaderColumns article > div > strong { font-family: Montserrat,Arial,sans-serif; font-size: 13px; }
+.networkLeaderColumns i { height: 5px; margin-top: 7px; display: block; overflow: hidden; background: var(--bg); border-radius: 999px; }
+.networkLeaderColumns em { height: 100%; display: block; background: var(--accent); border-radius: inherit; }
+.networkCapGrid { display: grid; grid-template-columns: 250px minmax(240px,.7fr) minmax(350px,1.3fr); align-items: center; gap: clamp(25px,4vw,60px); }
+.networkCapNumbers { display: grid; gap: 12px; }
+.networkCapNumbers div { padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.15); }
+.networkCapNumbers span { display: block; color: rgba(255,255,255,.55); font-size: 10px; }
+.networkCapNumbers strong { display: block; margin-top: 5px; font-family: Montserrat,Arial,sans-serif; font-size: 25px; }
+.networkVigilanceList { padding: 22px; color: var(--text); background: white; border-radius: 14px; }
+.networkVigilanceList > div { min-height: 55px; display: grid; grid-template-columns: 8px minmax(0,1fr) auto; align-items: center; gap: 10px; border-top: 1px solid var(--line); }
+.networkVigilanceList > div > i { width: 7px; height: 7px; background: #d99a2b; border-radius: 50%; }
+.networkVigilanceList > div > i.health-alert { background: #c54b43; }
+.networkVigilanceList span strong, .networkVigilanceList span small { display: block; }
+.networkVigilanceList span strong { font-size: 11px; }
+.networkVigilanceList span small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.networkVigilanceList b { font-size: 10px; }
+.meetingClosingLight { color: rgba(255,255,255,.65); }
 @keyframes cardArrival { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes ringReveal { from { opacity: 0; transform: scale(.88) rotate(-10deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 @keyframes drawerFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes drawerSlide { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 1100px) { .kpisPrimary, .kpisSecondary { grid-template-columns: repeat(2, 1fr); } .charts, .podiumGrid, .networkSplit { grid-template-columns: 1fr; } .networkExecutiveGrid { grid-template-columns: repeat(2, 1fr); } .healthGrid, .networkRankings { grid-template-columns: repeat(2, minmax(0, 1fr)); } .coachGrid, .balanceBody { grid-template-columns: 1fr; } .goalDashboard { grid-template-columns: 170px minmax(0,1fr); } .goalRing { width: 156px; } .scenarioGrid { grid-template-columns: 1fr; } .coachActionBody > p { min-height: 0; } .groupDetailKpis { grid-template-columns: repeat(3, 1fr); } .groupDetailKpis > div:nth-child(3) { border-right: 0; } .groupDetailColumns { grid-template-columns: 1fr; } .groupDetailPanel { border-right: 0; border-bottom: 1px solid var(--line); } }
-@media (max-width: 1100px) { .meetingGoalGrid { grid-template-columns: 190px 1fr; } .meetingGoalRing { width: 180px; } .meetingGoalRing::before { width: 136px; } .meetingActions { grid-column: 1 / -1; } }
+@media (max-width: 1100px) { .meetingGoalGrid, .networkCapGrid { grid-template-columns: 190px 1fr; } .meetingGoalRing { width: 180px; } .meetingGoalRing::before { width: 136px; } .meetingActions, .networkVigilanceList { grid-column: 1 / -1; } }
 @media (max-width: 760px) {
   .brandbar, .heroContent { padding-left: 20px; padding-right: 20px; }
   .brandbar > p, .heroAccent { display: none; }
@@ -601,6 +644,13 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
   .meetingGoalNumbers, .meetingActions { width: 100%; }
   .meetingActions { grid-column: auto; }
   .meetingPodiumGrid { grid-template-columns: 1fr; }
+  .networkToolbar { align-items: stretch; flex-direction: column; }
+  .networkToolbar a { text-align: center; }
+  .networkLeaderColumns { grid-template-columns: 1fr; }
+  .networkCapGrid { grid-template-columns: 1fr; justify-items: center; }
+  .networkCapNumbers, .networkVigilanceList { width: 100%; }
+  .networkVigilanceList { grid-column: auto; }
+  .networkGrowthList footer { align-items: start; flex-direction: column; gap: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

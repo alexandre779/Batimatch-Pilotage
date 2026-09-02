@@ -36,11 +36,8 @@ export function NetworkHealthMatrix({ groups, health, objectives, alerts, links 
 
   return (
     <>
-      <section className="networkMatrix sectionBlock" id="groupes">
-        <div className="sectionHeading">
-          <div><p className="eyebrow">SANTÉ DU RÉSEAU</p><h2>La situation de chaque groupe</h2><p>Cliquez sur un groupe pour ouvrir sa fiche de pilotage.</p></div>
-          <span className="comparisonNote">{health.length} groupe{health.length > 1 ? "s" : ""} suivi{health.length > 1 ? "s" : ""}</span>
-        </div>
+      <section className="networkMatrix" id="groupes">
+        <div className="networkMatrixMeta"><span>Cliquez sur un groupe pour ouvrir sa fiche de pilotage.</span><strong>{health.length} groupe{health.length > 1 ? "s" : ""} suivi{health.length > 1 ? "s" : ""}</strong></div>
         <div className="networkMatrixWrap">
           <table>
             <thead><tr><th>Groupe</th><th>Dynamique</th><th>Objectif CA</th><th>Engagement</th><th>Traitement</th><th>Dernière activité</th><th /></tr></thead>
