@@ -31,6 +31,17 @@ jobs:
           --data-cache=kv
           --image-optimization=cloudflare-images
 
+      - name: Show generated Cloudflare configuration
+        run: |
+          echo '--- PACKAGE_JSON ---'
+          cat package.json
+          echo '--- VITE_CONFIG ---'
+          cat vite.config.ts
+          echo '--- WRANGLER_CONFIG ---'
+          cat wrangler.jsonc
+          echo '--- GITIGNORE ---'
+          cat .gitignore
+
       - name: Build for Cloudflare Workers with vinext
         run: npm run build:vinext
         env:
