@@ -19,10 +19,9 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Check Cloudflare vinext compatibility
-        if: github.ref == 'refs/heads/test/cloudflare-workers'
         run: npx --yes vinext@latest check
-      - name: Build
-        run: npm run build
+      - name: Build Cloudflare target
+        run: npm run build:vinext
         env:
           AIRTABLE_TOKEN: pat_ci_placeholder
           AIRTABLE_BASE_ID: appfHlDc9F79EB56n
