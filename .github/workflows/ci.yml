@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, test/cloudflare-workers]
   pull_request:
     branches: [main]
 
@@ -18,6 +18,9 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
+      - name: Check Cloudflare vinext compatibility
+        if: github.ref == 'refs/heads/test/cloudflare-workers'
+        run: npx --yes vinext@latest check
       - name: Build
         run: npm run build
         env:
