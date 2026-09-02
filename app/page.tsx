@@ -195,7 +195,7 @@ export default async function Home({ searchParams }: PageProps) {
         ]} formatValue={(value) => euro.format(value)} />
         </section>}
 
-        {access.role === "network" && data && groupId === "all" && (
+        {access.role === "network" && data && (
           <FranceGroupsMap groups={data.groups} period={period} startDate={startDate} endDate={endDate} />
         )}
 
