@@ -78,13 +78,15 @@ export async function getPilotageAccess(accessToken: string | null): Promise<Pil
 
   const email = await verifyAccessToken(accessToken, teamDomain, audience);
   const fields = FIELDS.users;
-  const users = await listRecords(TABLES.users, [fields.email, fields.displayName, fields.memberStatus, fields.ownedGroups, fields.pilotageRole]);
+  const users = await listRecords(TABLES.users, [fields.email, fields.firstName, fields.displayName, fields.memberStatus, fields.ownedGroups, fields.pilotageRole]);
   const user = users.find((record) => String(record.fields[fields.email] ?? "").trim().toLowerCase() === email);
   if (!user || selectName(user.fields[fields.memberStatus]) !== "Actif") throw new Error("Accès pilotage non autorisé");
 
   const role = selectName(user.fields[fields.pilotageRole]);
+  const firstName = user.fields[fields.firstName];
   const displayName = user.fields[fields.displayName];
-  const name = typeof displayName === "string" ? displayName.trim() : null;
+  const fallbackName = typeof displayName === "string" ? displayName.trim().split(/\s+/).at(-1) ?? null : null;
+  const name = typeof firstName === "string" && firstName.trim() ? firstName.trim() : fallbackName;
   if (role === "Tête de réseau") return { email, name, groupId: null, role: "network", secured: true };
   if (role === "Président") {
     const groupId = firstLinkedRecord(user.fields[fields.ownedGroups]);
