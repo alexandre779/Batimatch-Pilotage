@@ -2,7 +2,12 @@ import "server-only";
 import { FIELDS, TABLES } from "@/lib/airtable/config";
 import { listRecords } from "@/lib/airtable/client";
 
-export type DashboardPeriod = "30d" | "90d" | "year" | "all";
+export type DashboardPeriod = "30d" | "90d" | "year" | "all" | "custom";
+
+export type DashboardDateRange = {
+  start: string;
+  end: string;
+};
 
 export type GroupPerformance = {
   id: string;
@@ -59,9 +64,28 @@ const asNumber = (value: unknown) => (typeof value === "number" ? value : 0);
 const asString = (value: unknown) => (typeof value === "string" ? value : "");
 const asIds = (value: unknown): string[] => Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 
-function periodBounds(period: DashboardPeriod) {
+function dateOnly(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+function periodBounds(period: DashboardPeriod, customRange?: DashboardDateRange) {
   const now = new Date();
   if (period === "all") return { start: null, end: now, previousStart: null, previousEnd: null };
+  if (period === "custom") {
+    const start = dateOnly(customRange?.start);
+    const inclusiveEnd = dateOnly(customRange?.end);
+    if (!start || !inclusiveEnd || start > inclusiveEnd) throw new Error("La plage de dates personnalisée est invalide");
+    const end = new Date(inclusiveEnd.getTime() + 24 * 60 * 60 * 1000);
+    const duration = end.getTime() - start.getTime();
+    return {
+      start,
+      end,
+      previousStart: new Date(start.getTime() - duration),
+      previousEnd: start
+    };
+  }
   if (period === "year") {
     const start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
     const previousStart = new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1));
@@ -92,7 +116,8 @@ function firstId(value: unknown) {
 
 export async function getDashboardData(
   period: DashboardPeriod = "30d",
-  selectedGroupId = "all"
+  selectedGroupId = "all",
+  customRange?: DashboardDateRange
 ): Promise<DashboardData> {
   const uf = FIELDS.users;
   const gf = FIELDS.groups;
@@ -120,7 +145,7 @@ export async function getDashboardData(
     if (asString(user.fields[uf.memberStatus]) === "Actif") activeUserIds.add(user.id);
   }
 
-  const bounds = periodBounds(period);
+  const bounds = periodBounds(period, customRange);
   const filteredOpportunities = opportunities.filter((opportunity) =>
     isInPeriod(opportunity.fields[of.createdAt], bounds.start, bounds.end)
   );
@@ -214,7 +239,8 @@ export async function getDashboardData(
   const validSelectedGroupId = selectedGroupId !== "all" && groupNames.has(selectedGroupId) ? selectedGroupId : null;
 
   const trendMap = new Map<string, TrendPoint>();
-  const useWeeks = period === "30d" || period === "90d";
+  const trendDuration = bounds.start ? bounds.end.getTime() - bounds.start.getTime() : Number.POSITIVE_INFINITY;
+  const useWeeks = trendDuration <= 120 * 24 * 60 * 60 * 1000;
   const bucketStart = (date: Date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), useWeeks ? date.getUTCDate() - date.getUTCDay() + 1 : 1));
   const allDates = opportunities.flatMap((opportunity) => [recordDate(opportunity.fields[of.createdAt]), recordDate(opportunity.fields[of.closedAt])].filter((date): date is Date => Boolean(date)));
   const firstTrendDate = bounds.start ?? (allDates.length ? new Date(Math.min(...allDates.map((date) => date.getTime()))) : bounds.end);

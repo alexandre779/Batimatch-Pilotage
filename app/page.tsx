@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getDashboardData, type DashboardPeriod } from "@/lib/services/dashboard";
+import { DashboardFilters } from "@/app/components/dashboard-filters";
 import { TrendChart } from "@/app/components/trend-chart";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -10,8 +11,19 @@ const PERIODS: { value: DashboardPeriod; label: string }[] = [
   { value: "30d", label: "30 derniers jours" },
   { value: "90d", label: "90 derniers jours" },
   { value: "year", label: "Année en cours" },
-  { value: "all", label: "Depuis le début" }
+  { value: "all", label: "Depuis le début" },
+  { value: "custom", label: "Plage personnalisée" }
 ];
+
+function dateParam(value: string | string[] | undefined) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "";
+}
+
+function formatDateRange(start: string, end: string) {
+  if (!start || !end) return "Plage personnalisée";
+  const formatter = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+  return `${formatter.format(new Date(`${start}T00:00:00Z`))} – ${formatter.format(new Date(`${end}T00:00:00Z`))}`;
+}
 
 function Kpi({ label, value, hint, current, previous, inverse = false, featured = false }: { label: string; value: string; hint?: string; current?: number; previous?: number; inverse?: boolean; featured?: boolean }) {
   const change = previous && current !== undefined ? (current - previous) / Math.abs(previous) : null;
@@ -42,12 +54,14 @@ export default async function Home({ searchParams }: PageProps) {
   const period: DashboardPeriod = PERIODS.some((p) => p.value === rawPeriod)
     ? (rawPeriod as DashboardPeriod)
     : "30d";
+  const startDate = dateParam(params.start);
+  const endDate = dateParam(params.end);
 
   let data: Awaited<ReturnType<typeof getDashboardData>> | null = null;
   let dataError: string | null = null;
 
   try {
-    data = await getDashboardData(period, groupId);
+    data = await getDashboardData(period, groupId, period === "custom" ? { start: startDate, end: endDate } : undefined);
   } catch (error) {
     dataError = error instanceof Error ? error.message : "Erreur inconnue lors du chargement Airtable";
   }
@@ -56,7 +70,9 @@ export default async function Home({ searchParams }: PageProps) {
   const kpis = data?.kpis;
   const previous = data?.previousKpis;
   const visibleGroups = groupId === "all" ? groups : groups.filter((group) => group.id === groupId);
-  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "30 derniers jours";
+  const periodLabel = period === "custom"
+    ? formatDateRange(startDate, endDate)
+    : PERIODS.find((p) => p.value === period)?.label ?? "30 derniers jours";
   const scopeLabel = data?.selectedGroupName ?? "Réseau national";
 
   return (
@@ -80,20 +96,15 @@ export default async function Home({ searchParams }: PageProps) {
       </section>
 
       <div className="content">
-        <form className="filters" method="get">
-          <div className="filterIntro">
-            <span>Vue affichée</span>
-            <strong>{scopeLabel}</strong>
-          </div>
-          <select aria-label="Groupe" name="group" defaultValue={groupId}>
-            <option value="all">Tous les groupes</option>
-            {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
-          </select>
-          <select aria-label="Période" name="period" defaultValue={period}>
-            {PERIODS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-          <button type="submit">Appliquer</button>
-        </form>
+        <DashboardFilters
+          groups={groups}
+          periods={PERIODS}
+          selectedGroupId={groupId}
+          selectedPeriod={period}
+          selectedGroupName={scopeLabel}
+          startDate={startDate}
+          endDate={endDate}
+        />
 
         {dataError && (
         <section className="notice">
