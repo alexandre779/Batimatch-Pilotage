@@ -25,7 +25,6 @@ export default async function PresentationPage({ searchParams }: { searchParams:
   const period = VALID_PERIODS.has(requestedPeriod) ? requestedPeriod : "30d";
   const data = await getDashboardData(period, groupId);
   const scope = data.selectedGroupName ?? "Réseau national";
-  const firstName = access.name?.split(/[\s-]+/).find(Boolean);
   const goal = data.goalSimulator;
   const realisticScenario = goal?.scenarios.find((scenario) => scenario.key === "realistic");
   const progress = goal?.target ? Math.min(1, goal.actual / goal.target) : 0;
@@ -37,7 +36,7 @@ export default async function PresentationPage({ searchParams }: { searchParams:
 
     <section className="presentationSlide presentationIntro" id="slide-1">
       <header className="presentationBrand"><span><Image src="/brand/batimatch-mark.png" alt="" width={56} height={56} priority /></span><strong>Bâtimatch</strong></header>
-      <div className="presentationIntroBody"><p className="eyebrow">POINT DE PILOTAGE</p><h1>{scope}</h1><p>{firstName ? `${firstName}, ` : ""}voici les chiffres et les actions à partager avec le groupe.</p><div className="meetingHeadline"><strong>{euro.format(data.kpis.revenueWon)}</strong><span>de chiffre d’affaires gagné sur la période</span></div></div>
+      <div className="presentationIntroBody"><p className="eyebrow">POINT DE PILOTAGE</p><h1>{scope}</h1><p>Notre performance, nos réussites et les prochaines étapes à franchir ensemble.</p><div className="meetingHeadline"><strong>{euro.format(data.kpis.revenueWon)}</strong><span>de chiffre d’affaires gagné sur la période</span></div></div>
       <a className="presentationNext" href="#slide-2">Découvrir les résultats ↓</a>
     </section>
 
