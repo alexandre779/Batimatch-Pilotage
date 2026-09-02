@@ -146,6 +146,27 @@ export type GroupBalance = {
   recommendations: string[];
 };
 
+export type GoalScenario = {
+  key: "prudent" | "realistic" | "ambitious";
+  label: string;
+  wins: number;
+  quotes: number;
+  appointments: number;
+  opportunities: number;
+  opportunitiesPerMember: number;
+};
+
+export type GoalSimulator = {
+  target: number;
+  actual: number;
+  remaining: number;
+  daysRemaining: number;
+  weightedPipeline: number;
+  gapAfterPipeline: number;
+  averageWonAmount: number;
+  scenarios: GoalScenario[];
+};
+
 export type DashboardData = {
   groups: GroupPerformance[];
   kpis: DashboardKpis;
@@ -175,6 +196,7 @@ export type DashboardData = {
   groupObjectives: GroupObjective[];
   presidentCoach: PresidentCoachAction[];
   groupBalance: GroupBalance | null;
+  goalSimulator: GoalSimulator | null;
   selectedGroupName: string | null;
 };
 
@@ -556,6 +578,41 @@ export async function getDashboardData(
     };
   }).sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
+  let goalSimulator: GoalSimulator | null = null;
+  if (validSelectedGroupId) {
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+    const receivedByGroup = opportunities.filter((opportunity) => opportunityGroup(opportunity, "receiver") === validSelectedGroupId);
+    const wonByGroup = receivedByGroup.filter((opportunity) => asString(opportunity.fields[of.stage]) === WON_STAGE);
+    const wonThisMonth = wonByGroup.filter((opportunity) => isInPeriod(opportunity.fields[of.closedAt], monthStart, nextMonthStart));
+    const actual = wonThisMonth.reduce((sum, opportunity) => sum + asNumber(opportunity.fields[of.quoteAmountHT]), 0);
+    const target = groupObjectives.find((group) => group.id === validSelectedGroupId)?.monthlyRevenue.target ?? 0;
+    const remaining = Math.max(0, target - actual);
+    const weightedPipeline = days30;
+    const gapAfterPipeline = Math.max(0, remaining - weightedPipeline);
+    const wonAmounts = wonByGroup.map((opportunity) => asNumber(opportunity.fields[of.quoteAmountHT])).filter((amount) => amount > 0);
+    const averageWonAmount = wonAmounts.length ? wonAmounts.reduce((sum, amount) => sum + amount, 0) / wonAmounts.length : 10000;
+    const quotedByGroup = receivedByGroup.filter((opportunity) => Boolean(recordDate(opportunity.fields[of.quoteDate])));
+    const historicalClosing = receivedByGroup.length ? wonByGroup.length / receivedByGroup.length : 0.2;
+    const historicalQuoteConversion = quotedByGroup.length ? wonByGroup.filter((opportunity) => Boolean(recordDate(opportunity.fields[of.quoteDate]))).length / quotedByGroup.length : 0.35;
+    const activeMembers = users.filter((user) => activeUserIds.has(user.id) && asIds(user.fields[uf.groupLinks]).includes(validSelectedGroupId)).length || 1;
+    const scenarioConfig: Array<{ key: GoalScenario["key"]; label: string; multiplier: number }> = [
+      { key: "prudent", label: "Prudent", multiplier: 0.85 },
+      { key: "realistic", label: "Réaliste", multiplier: 1 },
+      { key: "ambitious", label: "Ambitieux", multiplier: 1.15 }
+    ];
+    const wins = gapAfterPipeline > 0 ? Math.ceil(gapAfterPipeline / averageWonAmount) : 0;
+    const scenarios = scenarioConfig.map(({ key, label, multiplier }) => {
+      const quoteConversion = Math.max(0.12, Math.min(0.9, historicalQuoteConversion * multiplier));
+      const closing = Math.max(0.05, Math.min(0.8, historicalClosing * multiplier));
+      const quotes = wins ? Math.ceil(wins / quoteConversion) : 0;
+      const appointments = quotes ? Math.ceil(quotes / Math.max(0.3, Math.min(0.85, 0.65 * multiplier))) : 0;
+      const requiredOpportunities = wins ? Math.ceil(wins / closing) : 0;
+      return { key, label, wins, quotes, appointments, opportunities: requiredOpportunities, opportunitiesPerMember: requiredOpportunities ? Math.ceil(requiredOpportunities / activeMembers) : 0 };
+    });
+    goalSimulator = { target, actual, remaining, daysRemaining: Math.max(0, Math.ceil((nextMonthStart.getTime() - now.getTime()) / dayMs)), weightedPipeline, gapAfterPipeline, averageWonAmount, scenarios };
+  }
+
   const presidentCoach: PresidentCoachAction[] = [];
   if (validSelectedGroupId) {
     const stalled = opportunities.filter((opportunity) => {
@@ -865,6 +922,7 @@ export async function getDashboardData(
     groupObjectives,
     presidentCoach: presidentCoach.slice(0, 3),
     groupBalance,
+    goalSimulator,
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }

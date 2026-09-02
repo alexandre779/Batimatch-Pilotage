@@ -84,6 +84,50 @@ button:hover { filter: brightness(.96); }
 .coachAllClear { margin-top: 20px; padding: 22px; text-align: center; color: var(--text); background: white; border-radius: 10px; }
 .coachAllClear strong { font-family: Montserrat, Arial, sans-serif; }
 .coachAllClear p { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+.goalSimulator { margin-bottom: 30px; padding: 26px; background: white; border: 1px solid var(--line); border-top: 5px solid var(--accent); border-radius: 14px; box-shadow: 0 12px 30px rgba(16,47,79,.08); }
+.goalHeader { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+.goalHeader h2 { font-size: 27px; }
+.goalHeader p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+.goalHeader > span { padding: 7px 10px; color: var(--accent); background: #fff3ea; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.goalOverview { margin-top: 20px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); border: 1px solid var(--line); border-radius: 10px; }
+.goalOverview > div { padding: 15px 18px; border-right: 1px solid var(--line); }
+.goalOverview > div:last-child { border-right: 0; }
+.goalOverview span { display: block; color: var(--muted); font-size: 9px; }
+.goalOverview strong { display: block; margin-top: 5px; font-family: Montserrat,Arial,sans-serif; font-size: 20px; }
+.goalProgress { height: 9px; margin: 18px 0 37px; position: relative; background: var(--bg); border-radius: 99px; }
+.goalProgress > span { height: 100%; display: block; background: linear-gradient(90deg,var(--dark),var(--accent)); border-radius: inherit; }
+.goalProgress small { position: absolute; top: 14px; right: 0; color: var(--muted); font-size: 9px; }
+.scenarioGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.scenarioCard { padding: 18px; background: #f6f4f1; border-top: 4px solid #7d91a5; border-radius: 10px; }
+.scenario-realistic { border-top-color: var(--accent); background: #fff8f3; }
+.scenario-ambitious { border-top-color: var(--success); }
+.scenarioCard h3 { margin: 0; font-family: Montserrat,Arial,sans-serif; font-size: 16px; }
+.scenarioCard dl { margin: 14px 0 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.scenarioCard dl div { padding-top: 8px; border-top: 1px solid var(--line); }
+.scenarioCard dt { color: var(--muted); font-size: 8px; }
+.scenarioCard dd { margin: 3px 0 0; font-family: Montserrat,Arial,sans-serif; font-size: 20px; font-weight: 800; }
+.scenarioCard > p { margin: 14px 0 0; color: var(--muted); font-size: 9px; }
+.goalDirective { margin: 18px 0 0; padding: 14px 16px; color: white; background: var(--dark); border-radius: 9px; font-size: 11px; }
+.goalFootnote { margin: 10px 0 0; color: var(--muted); font-size: 9px; font-style: italic; }
+.goalMissing { margin-top: 18px; padding: 18px; background: #fff4eb; border-radius: 10px; }
+.goalMissing p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+.collapsibleBlock { margin-bottom: 28px; background: white; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.collapsibleBlock > summary { padding: 22px 25px; display: flex; align-items: center; justify-content: space-between; gap: 20px; cursor: pointer; list-style: none; }
+.collapsibleBlock > summary::-webkit-details-marker { display: none; }
+.collapsibleBlock > summary:hover { background: #faf9f7; }
+.collapsibleBlock > summary h2 { margin-top: 4px; }
+.collapsibleBlock > summary div > p:last-child:not(.eyebrow) { margin: 6px 0 0; color: var(--muted); font-size: 10px; }
+.collapseAction { flex: 0 0 auto; display: flex; align-items: center; gap: 9px; color: var(--accent); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+.collapseAction i { font-style: normal; }
+.collapseAction b { font-size: 18px; transition: transform .2s ease; }
+.collapseReduce { display: none; }
+.collapsibleBlock[open] .collapseExpand { display: none; }
+.collapsibleBlock[open] .collapseReduce { display: inline; }
+.collapsibleBlock[open] .collapseAction b { transform: rotate(180deg); }
+.collapsibleContent { padding: 0 25px 25px; }
+.balanceEmbedded { margin: 0; padding: 0; border: 0; border-radius: 0; }
+.balanceEmbedded .balanceHeader { display: none; }
+.panelEmbedded { margin: 0; border-radius: 10px; box-shadow: none; }
 .balanceSection { margin-bottom: 30px; padding: 26px; background: white; border: 1px solid var(--line); border-radius: 14px; }
 .balanceHeader { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .balanceHeader > div:first-child > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
@@ -330,7 +374,7 @@ tbody tr:hover { background: #fff8f3; }
 tbody tr:last-child td { border-bottom: 0; }
 .empty { color: var(--muted); text-align: center; padding: 38px; }
 footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: center; }
-@media (max-width: 1100px) { .kpisPrimary, .kpisSecondary { grid-template-columns: repeat(2, 1fr); } .charts, .podiumGrid, .networkSplit { grid-template-columns: 1fr; } .healthGrid, .networkRankings { grid-template-columns: repeat(2, minmax(0, 1fr)); } .coachGrid, .balanceBody { grid-template-columns: 1fr; } .coachActionBody > p { min-height: 0; } .groupDetailKpis { grid-template-columns: repeat(3, 1fr); } .groupDetailKpis > div:nth-child(3) { border-right: 0; } .groupDetailColumns { grid-template-columns: 1fr; } .groupDetailPanel { border-right: 0; border-bottom: 1px solid var(--line); } }
+@media (max-width: 1100px) { .kpisPrimary, .kpisSecondary { grid-template-columns: repeat(2, 1fr); } .charts, .podiumGrid, .networkSplit { grid-template-columns: 1fr; } .healthGrid, .networkRankings { grid-template-columns: repeat(2, minmax(0, 1fr)); } .coachGrid, .balanceBody { grid-template-columns: 1fr; } .goalOverview { grid-template-columns: repeat(2,1fr); } .goalOverview > div:nth-child(2) { border-right: 0; } .scenarioGrid { grid-template-columns: 1fr; } .coachActionBody > p { min-height: 0; } .groupDetailKpis { grid-template-columns: repeat(3, 1fr); } .groupDetailKpis > div:nth-child(3) { border-right: 0; } .groupDetailColumns { grid-template-columns: 1fr; } .groupDetailPanel { border-right: 0; border-bottom: 1px solid var(--line); } }
 @media (max-width: 760px) {
   .brandbar, .heroContent { padding-left: 20px; padding-right: 20px; }
   .brandbar > p, .heroAccent { display: none; }

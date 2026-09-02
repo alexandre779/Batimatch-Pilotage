@@ -12,7 +12,7 @@ const QUADRANTS: Array<{ key: MemberBalance["quadrant"]; title: string; hint: st
 
 export function GroupBalance({ balance }: { balance: GroupBalanceData }) {
   return (
-    <section className="balanceSection">
+    <div className="balanceSection balanceEmbedded">
       <header className="balanceHeader">
         <div><p className="eyebrow">ÉQUILIBRE DU GROUPE</p><h2>Qui contribue, qui reçoit, qui remobiliser ?</h2><p>Lecture calculée sur la période sélectionnée.</p></div>
         <div className="balanceScore"><strong>{balance.score}<small>/100</small></strong><span>{balance.label}</span></div>
@@ -52,6 +52,6 @@ export function GroupBalance({ balance }: { balance: GroupBalanceData }) {
         </aside>
       </div>
       <p className="balanceFootnote">Les quadrants utilisent la moyenne du groupe sur la période. Cet outil sert à préparer l’animation collective, pas à sanctionner les adhérents.</p>
-    </section>
+    </div>
   );
 }

@@ -10,6 +10,8 @@ import { NetworkPilotage } from "@/app/components/network-pilotage";
 import { GroupDetail } from "@/app/components/group-detail";
 import { PresidentCoach } from "@/app/components/president-coach";
 import { GroupBalance } from "@/app/components/group-balance";
+import { GoalSimulator } from "@/app/components/goal-simulator";
+import { CollapsibleBlock } from "@/app/components/collapsible-block";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
@@ -78,6 +80,13 @@ function Podium({ title, subtitle, entries, metric, amountLabel = "gagnés" }: {
       </ol>
     </article>
   );
+}
+
+function PerformanceTable({ groups, accessRole, groupHref }: { groups: Awaited<ReturnType<typeof getDashboardData>>["groups"]; accessRole: "network" | "president"; groupHref: (id: string) => string }) {
+  return <table><thead><tr><th>Groupe</th><th>Membres</th><th>Envoyées</th><th>Reçues</th><th>Gagnées</th><th>Déclinées</th><th>Closing</th><th>Devis → commande</th><th>CA gagné</th><th>Pipeline</th></tr></thead><tbody>
+    {groups.map((group) => <tr key={group.id}><td>{accessRole === "network" ? <Link className="groupTableLink" href={groupHref(group.id)}>{group.name || "Sans nom"}</Link> : <strong>{group.name || "Sans nom"}</strong>}</td><td>{number.format(group.memberCount)}</td><td>{number.format(group.opportunitiesSent)}</td><td>{number.format(group.opportunitiesReceived)}</td><td>{number.format(group.wonOpportunities)}</td><td>{number.format(group.declinedOpportunities)}</td><td>{percent.format(group.closingRate)}</td><td>{percent.format(group.quoteConversionRate)}</td><td>{euro.format(group.revenueWon)}</td><td>{euro.format(group.pipelineValue)}</td></tr>)}
+    {!groups.length && <tr><td colSpan={10} className="empty">Aucune donnée disponible sur ce périmètre.</td></tr>}
+  </tbody></table>;
 }
 
 type PageProps = {
@@ -195,7 +204,9 @@ export default async function Home({ searchParams }: PageProps) {
 
         {access.role === "president" && data && <PresidentCoach actions={data.presidentCoach} />}
 
-        {access.role === "president" && data?.groupBalance && <GroupBalance balance={data.groupBalance} />}
+        {access.role === "president" && data?.goalSimulator && <GoalSimulator simulator={data.goalSimulator} />}
+
+        {access.role === "president" && data?.groupBalance && <CollapsibleBlock eyebrow="ÉQUILIBRE DU GROUPE" title="Qui contribue, qui reçoit, qui remobiliser ?" hint="Lecture calculée sur la période sélectionnée."><GroupBalance balance={data.groupBalance} /></CollapsibleBlock>}
 
         <section className="sectionBlock">
           <div className="sectionHeading">
@@ -222,7 +233,7 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
         </section>
 
-        {data && <section className="charts">
+        {data && (access.role === "president" ? <CollapsibleBlock eyebrow="ÉVOLUTION" title="Les résultats dans le temps" hint="Opportunités et chiffre d’affaires sur la période sélectionnée."><section className="charts">
         <TrendChart eyebrow="ACTIVITÉ" title="Opportunités dans le temps" points={data.trends} series={[
           { key: "sent", label: "Envoyées", color: "#102f4f" },
           { key: "received", label: "Reçues", color: "#f18748" },
@@ -231,7 +242,10 @@ export default async function Home({ searchParams }: PageProps) {
         <TrendChart eyebrow="REVENU" title="CA gagné dans le temps" points={data.trends} series={[
           { key: "revenueWon", label: "CA gagné", color: "#f18748" }
         ]} formatValue={(value) => euro.format(value)} />
-        </section>}
+        </section></CollapsibleBlock> : <section className="charts">
+          <TrendChart eyebrow="ACTIVITÉ" title="Opportunités dans le temps" points={data.trends} series={[{ key: "sent", label: "Envoyées", color: "#102f4f" }, { key: "received", label: "Reçues", color: "#f18748" }, { key: "won", label: "Gagnées", color: "#55a182" }]} />
+          <TrendChart eyebrow="REVENU" title="CA gagné dans le temps" points={data.trends} series={[{ key: "revenueWon", label: "CA gagné", color: "#f18748" }]} formatValue={(value) => euro.format(value)} />
+        </section>)}
 
         {access.role === "network" && data && <MaturityChart series={data.maturitySeries} />}
 
@@ -253,21 +267,17 @@ export default async function Home({ searchParams }: PageProps) {
         )}
 
         {access.role === "president" && data && (
-          <section className="sectionBlock podiumSection">
-            <div className="sectionHeading">
-              <div><p className="eyebrow">CLASSEMENT</p><h2>Les champions du groupe</h2></div>
-              <span className="comparisonNote">Sur la période sélectionnée</span>
-            </div>
+          <CollapsibleBlock eyebrow="CLASSEMENT" title="Les champions du groupe" hint="Sur la période sélectionnée">
             <div className="podiumGrid">
               <Podium title="Top donneurs — nombre" subtitle="Plus grand nombre d’affaires envoyées" entries={data.leaderboards.donorsByCount} metric="count" />
               <Podium title="Top donneurs — montant" subtitle="Plus fort montant d’affaires transmis" entries={data.leaderboards.donorsByAmount} metric="amount" amountLabel="transmis" />
               <Podium title="Top signeurs — nombre" subtitle="Plus grand nombre d’affaires gagnées" entries={data.leaderboards.signersByCount} metric="count" />
               <Podium title="Top signeurs — montant" subtitle="Plus fort chiffre d’affaires gagné" entries={data.leaderboards.signersByAmount} metric="amount" />
             </div>
-          </section>
+          </CollapsibleBlock>
         )}
 
-        <section className="panel">
+        {access.role === "president" ? <CollapsibleBlock eyebrow="DONNÉES" title="Performance détaillée du groupe" hint="Tous les indicateurs consolidés dans un tableau."><section className="panel panelEmbedded"><div className="tableWrap"><PerformanceTable groups={visibleGroups} accessRole={access.role} groupHref={groupHref} /></div></section></CollapsibleBlock> : <section className="panel">
         <div className="panelTitle">
           <div>
             <p className="eyebrow">GROUPES</p>
@@ -276,41 +286,9 @@ export default async function Home({ searchParams }: PageProps) {
           <span>{visibleGroups.length} groupe{visibleGroups.length > 1 ? "s" : ""}</span>
         </div>
         <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Groupe</th>
-                <th>Membres</th>
-                <th>Envoyées</th>
-                <th>Reçues</th>
-                <th>Gagnées</th>
-                <th>Déclinées</th>
-                <th>Closing</th>
-                <th>Devis → commande</th>
-                <th>CA gagné</th>
-                <th>Pipeline</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleGroups.map((group) => (
-                <tr key={group.id}>
-                  <td>{access.role === "network" ? <Link className="groupTableLink" href={groupHref(group.id)}>{group.name || "Sans nom"}</Link> : <strong>{group.name || "Sans nom"}</strong>}</td>
-                  <td>{number.format(group.memberCount)}</td>
-                  <td>{number.format(group.opportunitiesSent)}</td>
-                  <td>{number.format(group.opportunitiesReceived)}</td>
-                  <td>{number.format(group.wonOpportunities)}</td>
-                  <td>{number.format(group.declinedOpportunities)}</td>
-                  <td>{percent.format(group.closingRate)}</td>
-                  <td>{percent.format(group.quoteConversionRate)}</td>
-                  <td>{euro.format(group.revenueWon)}</td>
-                  <td>{euro.format(group.pipelineValue)}</td>
-                </tr>
-              ))}
-              {!visibleGroups.length && <tr><td colSpan={10} className="empty">Aucune donnée disponible sur ce périmètre.</td></tr>}
-            </tbody>
-          </table>
+          <PerformanceTable groups={visibleGroups} accessRole={access.role} groupHref={groupHref} />
         </div>
-        </section>
+        </section>}
         <footer>Des pros du BTP qui se ressemblent et qui bossent ensemble.</footer>
       </div>
     </main>
