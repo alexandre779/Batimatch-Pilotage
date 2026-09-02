@@ -1,1 +1,185 @@
-m´ÎàßΩ©bu™‡∫gßµ™i˛ñ†z€1R∆†y∂¨{ÆvÁ∫h¢ù¯•zä.µ¯•y∂Îy©≠Ê§zw(uÁh∫⁄n∂Íbû⁄%äw¨°˘^ûaûÈÉu◊ú°◊ùy z)È∫ÿazZ]ä ek+aä…û≤∆†z(ß¶Îbûõ≠~)^uÁ⁄∫[_¢ª-v)Ë¢Îi∫⁄.∂õ≠~)^uÁ⁄∫[_¢ª-vã≠
+import Image from "next/image";
+import { getDashboardData, type DashboardPeriod } from "@/lib/services/dashboard";
+import { TrendChart } from "@/app/components/trend-chart";
+
+const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const number = new Intl.NumberFormat("fr-FR");
+const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
+
+const PERIODS: { value: DashboardPeriod; label: string }[] = [
+  { value: "30d", label: "30 derniers jours" },
+  { value: "90d", label: "90 derniers jours" },
+  { value: "year", label: "Ann√©e en cours" },
+  { value: "all", label: "Depuis le d√©but" }
+];
+
+function Kpi({ label, value, hint, current, previous, inverse = false, featured = false }: { label: string; value: string; hint?: string; current?: number; previous?: number; inverse?: boolean; featured?: boolean }) {
+  const change = previous && current !== undefined ? (current - previous) / Math.abs(previous) : null;
+  const positive = change !== null && (inverse ? change <= 0 : change >= 0);
+  return (
+    <article className={`kpi${featured ? " kpiFeatured" : ""}`}>
+      <div>
+        <span>{label}</span>
+        {hint && <small>{hint}</small>}
+      </div>
+      <div className="kpiValue"><strong>{value}</strong>{change !== null && <small className={positive ? "delta positive" : "delta negative"}>{change >= 0 ? "+" : ""}{percent.format(change)}</small>}</div>
+    </article>
+  );
+}
+
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function scalar(value: string | string[] | undefined, fallback: string) {
+  return typeof value === "string" ? value : fallback;
+}
+
+export default async function Home({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const groupId = scalar(params.group, "all");
+  const rawPeriod = scalar(params.period, "30d");
+  const period: DashboardPeriod = PERIODS.some((p) => p.value === rawPeriod)
+    ? (rawPeriod as DashboardPeriod)
+    : "30d";
+
+  let data: Awaited<ReturnType<typeof getDashboardData>> | null = null;
+  let dataError: string | null = null;
+
+  try {
+    data = await getDashboardData(period, groupId);
+  } catch (error) {
+    dataError = error instanceof Error ? error.message : "Erreur inconnue lors du chargement Airtable";
+  }
+
+  const groups = data?.groups ?? [];
+  const kpis = data?.kpis;
+  const previous = data?.previousKpis;
+  const visibleGroups = groupId === "all" ? groups : groups.filter((group) => group.id === groupId);
+  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "30 derniers jours";
+  const scopeLabel = data?.selectedGroupName ?? "R√©seau national";
+
+  return (
+    <main className="dashboard">
+      <section className="hero">
+        <header className="brandbar">
+          <div className="brand">
+            <span className="brandMark"><Image src="/brand/batimatch-mark.png" alt="" width={48} height={48} priority /></span>
+            <span>B√¢timatch</span>
+          </div>
+          <p>Le r√©seau business des pros du b√¢timent</p>
+        </header>
+        <div className="heroContent">
+          <div>
+            <p className="eyebrow eyebrowLight">PILOTAGE R√âSEAU</p>
+            <h1>La performance<br />en un coup d‚Äô≈ìil.</h1>
+            <p className="subtitle subtitleLight">{scopeLabel} ¬∑ {periodLabel}</p>
+          </div>
+          <div className="heroAccent" aria-hidden="true">B</div>
+        </div>
+      </section>
+
+      <div className="content">
+        <form className="filters" method="get">
+          <div className="filterIntro">
+            <span>Vue affich√©e</span>
+            <strong>{scopeLabel}</strong>
+          </div>
+          <select aria-label="Groupe" name="group" defaultValue={groupId}>
+            <option value="all">Tous les groupes</option>
+            {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+          </select>
+          <select aria-label="P√©riode" name="period" defaultValue={period}>
+            {PERIODS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+          <button type="submit">Appliquer</button>
+        </form>
+
+        {dataError && (
+        <section className="notice">
+          Erreur de connexion Airtable : {dataError}
+        </section>
+        )}
+
+        <section className="sectionBlock">
+          <div className="sectionHeading">
+            <div><p className="eyebrow">L‚ÄôESSENTIEL</p><h2>R√©sultats business</h2></div>
+            {period !== "all" && <span className="comparisonNote">√âvolution vs p√©riode pr√©c√©dente</span>}
+          </div>
+          <div className="kpis kpisPrimary">
+            <Kpi featured label="CA gagn√©" value={euro.format(kpis?.revenueWon ?? 0)} hint="devis HT gagn√©s" current={kpis?.revenueWon} previous={previous?.revenueWon} />
+            <Kpi featured label="Transformation" value={percent.format(kpis?.conversionRate ?? 0)} hint="gagn√©es / affaires conclues" current={kpis?.conversionRate} previous={previous?.conversionRate} />
+            <Kpi featured label="Affaires gagn√©es" value={number.format(kpis?.opportunitiesWon ?? 0)} current={kpis?.opportunitiesWon} previous={previous?.opportunitiesWon} />
+            <Kpi featured label="Pipeline ouvert" value={euro.format(kpis?.pipelineValue ?? 0)} hint={`${number.format(kpis?.openOpportunities ?? 0)} affaire(s) en cours`} />
+          </div>
+        </section>
+
+        <section className="sectionBlock">
+          <div className="sectionHeading"><div><p className="eyebrow">DYNAMIQUE</p><h2>Activit√© du r√©seau</h2></div></div>
+          <div className="kpis kpisSecondary">
+            <Kpi label="Membres actifs" value={number.format(kpis?.activeMembers ?? 0)} />
+            <Kpi label="Opportunit√©s envoy√©es" value={number.format(kpis?.opportunitiesSent ?? 0)} current={kpis?.opportunitiesSent} previous={previous?.opportunitiesSent} />
+            <Kpi label="Opportunit√©s re√ßues" value={number.format(kpis?.opportunitiesReceived ?? 0)} current={kpis?.opportunitiesReceived} previous={previous?.opportunitiesReceived} />
+            <Kpi label="Affaires perdues" value={number.format(kpis?.opportunitiesLost ?? 0)} current={kpis?.opportunitiesLost} previous={previous?.opportunitiesLost} inverse />
+            <Kpi label="D√©lai de conclusion" value={`${number.format(Math.round(kpis?.averageCloseDays ?? 0))} j`} hint="moyenne des affaires conclues" current={kpis?.averageCloseDays} previous={previous?.averageCloseDays} inverse />
+          </div>
+        </section>
+
+        {data && <section className="charts">
+        <TrendChart eyebrow="ACTIVIT√â" title="Opportunit√©s dans le temps" points={data.trends} series={[
+          { key: "sent", label: "Envoy√©es", color: "#102f4f" },
+          { key: "received", label: "Re√ßues", color: "#f18748" },
+          { key: "won", label: "Gagn√©es", color: "#55a182" }
+        ]} />
+        <TrendChart eyebrow="REVENU" title="CA gagn√© dans le temps" points={data.trends} series={[
+          { key: "revenueWon", label: "CA gagn√©", color: "#f18748" }
+        ]} formatValue={(value) => euro.format(value)} />
+        </section>}
+
+        <section className="panel">
+        <div className="panelTitle">
+          <div>
+            <p className="eyebrow">GROUPES</p>
+            <h2>{groupId === "all" ? "Performance du r√©seau" : "Performance du groupe"}</h2>
+          </div>
+          <span>{visibleGroups.length} groupe{visibleGroups.length > 1 ? "s" : ""}</span>
+        </div>
+        <div className="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Groupe</th>
+                <th>Membres</th>
+                <th>Envoy√©es</th>
+                <th>Re√ßues</th>
+                <th>Gagn√©es</th>
+                <th>D√©clin√©es</th>
+                <th>Taux transfo.</th>
+                <th>CA gagn√©</th>
+                <th>Pipeline</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleGroups.map((group) => (
+                <tr key={group.id}>
+                  <td><strong>{group.name || "Sans nom"}</strong></td>
+                  <td>{number.format(group.memberCount)}</td>
+                  <td>{number.format(group.opportunitiesSent)}</td>
+                  <td>{number.format(group.opportunitiesReceived)}</td>
+                  <td>{number.format(group.wonOpportunities)}</td>
+                  <td>{number.format(group.declinedOpportunities)}</td>
+                  <td>{percent.format(group.conversionRate)}</td>
+                  <td>{euro.format(group.revenueWon)}</td>
+                  <td>{euro.format(group.pipelineValue)}</td>
+                </tr>
+              ))}
+              {!visibleGroups.length && <tr><td colSpan={9} className="empty">Aucune donn√©e disponible sur ce p√©rim√®tre.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        </section>
+        <footer>Des pros du BTP qui se ressemblent et qui bossent ensemble.</footer>
+      </div>
+    </main>
+  );
+}
