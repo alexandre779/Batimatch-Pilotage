@@ -61,6 +61,7 @@ export type MaturityPoint = {
   volume: number;
   revenue: number;
   opportunities: number;
+  activeMembers: number;
 };
 
 export type MaturitySeries = {
@@ -301,7 +302,8 @@ export async function getDashboardData(
       month: index + 1,
       volume: 0,
       revenue: 0,
-      opportunities: 0
+      opportunities: 0,
+      activeMembers: 0
     }));
     return [{ id: group.id, name: asString(group.fields[gf.name]) || "Groupe sans nom", points }];
   });
@@ -329,6 +331,16 @@ export async function getDashboardData(
     const revenueMonth = maturityMonth(groupId, opportunity.fields[of.closedAt]);
     if (revenueMonth && series.points[revenueMonth - 1]) {
       series.points[revenueMonth - 1].revenue += asNumber(opportunity.fields[of.quoteAmountHT]);
+    }
+  }
+
+  for (const user of users) {
+    if (!activeUserIds.has(user.id)) continue;
+    for (const groupId of userGroups.get(user.id) ?? []) {
+      const series = maturityByGroup.get(groupId);
+      if (!series) continue;
+      const entryMonth = maturityMonth(groupId, user.fields[uf.testStartDate]);
+      if (entryMonth && series.points[entryMonth - 1]) series.points[entryMonth - 1].activeMembers += 1;
     }
   }
 

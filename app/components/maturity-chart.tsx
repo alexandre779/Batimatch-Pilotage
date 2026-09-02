@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { MaturitySeries } from "@/lib/services/dashboard";
 
-type Metric = "volume" | "revenue" | "opportunities";
+type Metric = "volume" | "revenue" | "opportunities" | "activeMembers";
+type ReadingMode = "monthly" | "cumulative";
 
 const COLORS = ["#102f4f", "#f18748", "#55a182", "#8b6fb1", "#d2a43a", "#4f86a8", "#b75f76", "#738151"];
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -12,20 +13,25 @@ const number = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
 const METRICS: { value: Metric; label: string }[] = [
   { value: "volume", label: "Volume échangé" },
   { value: "revenue", label: "CA gagné" },
-  { value: "opportunities", label: "Nombre d’opportunités" }
+  { value: "opportunities", label: "Nombre d’opportunités" },
+  { value: "activeMembers", label: "Adhérents actifs" }
 ];
 
 export function MaturityChart({ series }: { series: MaturitySeries[] }) {
   const [metric, setMetric] = useState<Metric>("volume");
   const [horizon, setHorizon] = useState(12);
+  const [readingMode, setReadingMode] = useState<ReadingMode>("monthly");
   const width = 980;
   const height = 340;
   const padding = { top: 18, right: 24, bottom: 42, left: 82 };
-  const values = series.flatMap((group) => group.points.slice(0, horizon).map((point) => point[metric]));
+  const valueAt = (points: MaturitySeries["points"], index: number) => readingMode === "cumulative"
+    ? points.slice(0, index + 1).reduce((sum, point) => sum + point[metric], 0)
+    : points[index]?.[metric] ?? 0;
+  const values = series.flatMap((group) => group.points.slice(0, horizon).map((_, index) => valueAt(group.points, index)));
   const max = Math.max(...values, 1);
   const x = (month: number) => padding.left + (month - 1) * ((width - padding.left - padding.right) / Math.max(horizon - 1, 1));
   const y = (value: number) => padding.top + (max - value) * ((height - padding.top - padding.bottom) / max);
-  const format = metric === "opportunities" ? number.format : euro.format;
+  const format = metric === "opportunities" || metric === "activeMembers" ? number.format : euro.format;
 
   return (
     <section className="maturityCard">
@@ -37,6 +43,7 @@ export function MaturityChart({ series }: { series: MaturitySeries[] }) {
         </div>
         <div className="maturityControls">
           <label><span>Indicateur</span><select value={metric} onChange={(event) => setMetric(event.target.value as Metric)}>{METRICS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <label><span>Lecture</span><select value={readingMode} onChange={(event) => setReadingMode(event.target.value as ReadingMode)}><option value="monthly">Par mois</option><option value="cumulative">Cumulé depuis l’ouverture</option></select></label>
           <label><span>Horizon</span><select value={horizon} onChange={(event) => setHorizon(Number(event.target.value))}><option value={6}>6 mois</option><option value={12}>12 mois</option><option value={24}>24 mois</option></select></label>
         </div>
       </div>
@@ -53,12 +60,16 @@ export function MaturityChart({ series }: { series: MaturitySeries[] }) {
               const points = group.points.slice(0, horizon);
               const color = COLORS[index % COLORS.length];
               return <g key={group.id}>
-                {points.length > 1 && <polyline fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" points={points.map((point) => `${x(point.month)},${y(point[metric])}`).join(" ")} />}
-                {points.map((point) => <circle key={point.month} cx={x(point.month)} cy={y(point[metric])} r="4" fill={color}><title>{group.name} · M{point.month} · {format(point[metric])}</title></circle>)}
+                {points.length > 1 && <polyline fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" points={points.map((point, pointIndex) => `${x(point.month)},${y(valueAt(group.points, pointIndex))}`).join(" ")} />}
+                {points.map((point, pointIndex) => {
+                  const value = valueAt(group.points, pointIndex);
+                  return <circle key={point.month} cx={x(point.month)} cy={y(value)} r="4" fill={color}><title>{group.name} · M{point.month} · {format(value)}</title></circle>;
+                })}
               </g>;
             })}
             {Array.from({ length: horizon }, (_, index) => index + 1).map((month) => (month === 1 || month === horizon || month % (horizon === 24 ? 3 : 2) === 0) && <text key={month} x={x(month)} y={height - 13} textAnchor="middle">M{month}</text>)}
           </svg>
+          {metric === "activeMembers" && <p className="maturityNote">Calcul basé sur la date de début du test des adhérents actuellement actifs. En lecture mensuelle : nouveaux actifs intégrés pendant le mois ; en cumulé : actifs intégrés depuis l’ouverture.</p>}
         </>
       )}
     </section>
