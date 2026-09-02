@@ -8,6 +8,7 @@ import { TrendChart } from "@/app/components/trend-chart";
 import { MaturityChart } from "@/app/components/maturity-chart";
 import { NetworkPilotage } from "@/app/components/network-pilotage";
 import { GroupDetail } from "@/app/components/group-detail";
+import { PresidentCoach } from "@/app/components/president-coach";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
@@ -190,6 +191,8 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
           </section>
         )}
+
+        {access.role === "president" && data && <PresidentCoach actions={data.presidentCoach} />}
 
         <section className="sectionBlock">
           <div className="sectionHeading">

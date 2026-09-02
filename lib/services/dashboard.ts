@@ -113,6 +113,16 @@ export type GroupObjective = {
   annualNewMembers: { actual: number; target: number };
 };
 
+export type PresidentCoachAction = {
+  id: string;
+  priority: "urgent" | "important" | "opportunity";
+  title: string;
+  summary: string;
+  amount: number | null;
+  impact: string;
+  items: string[];
+};
+
 export type DashboardData = {
   groups: GroupPerformance[];
   kpis: DashboardKpis;
@@ -140,6 +150,7 @@ export type DashboardData = {
   funnel: FunnelStep[];
   forecast: NetworkForecast;
   groupObjectives: GroupObjective[];
+  presidentCoach: PresidentCoachAction[];
   selectedGroupName: string | null;
 };
 
@@ -220,6 +231,8 @@ export async function getDashboardData(
       gf.monthlyOpportunityTarget, gf.monthlySentVolumeTarget, gf.annualNewMemberTarget
     ]),
     listRecords(TABLES.opportunities, [
+      of.reference,
+      of.name,
       of.giver,
       of.receiver,
       of.stage,
@@ -519,6 +532,81 @@ export async function getDashboardData(
     };
   }).sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
+  const presidentCoach: PresidentCoachAction[] = [];
+  if (validSelectedGroupId) {
+    const stalled = opportunities.filter((opportunity) => {
+      if (opportunityGroup(opportunity, "receiver") !== validSelectedGroupId || asString(opportunity.fields[of.stage]) !== PENDING_TREATMENT_STAGE) return false;
+      const createdAt = recordDate(opportunity.fields[of.createdAt]);
+      return Boolean(createdAt && now.getTime() - createdAt.getTime() >= 7 * dayMs);
+    }).sort((a, b) => (recordDate(a.fields[of.createdAt])?.getTime() ?? 0) - (recordDate(b.fields[of.createdAt])?.getTime() ?? 0));
+    if (stalled.length) {
+      const amount = stalled.reduce((sum, opportunity) => sum + asNumber(opportunity.fields[of.opportunityAmount]), 0);
+      presidentCoach.push({
+        id: "stalled-opportunities",
+        priority: "urgent",
+        title: `Relancer ${stalled.length} affaire${stalled.length > 1 ? "s" : ""} bloquée${stalled.length > 1 ? "s" : ""}`,
+        summary: "Ces opportunités attendent une première prise en charge depuis au moins 7 jours.",
+        amount: amount || null,
+        impact: "Réduire le risque de perte et accélérer la mise en relation.",
+        items: stalled.slice(0, 4).map((opportunity) => {
+          const createdAt = recordDate(opportunity.fields[of.createdAt]);
+          const days = createdAt ? Math.floor((now.getTime() - createdAt.getTime()) / dayMs) : 0;
+          const receiverId = firstId(opportunity.fields[of.receiver]);
+          const label = asString(opportunity.fields[of.name]) || asString(opportunity.fields[of.reference]) || "Affaire sans nom";
+          return `${label} · ${userNames.get(receiverId ?? "") ?? "Adhérent non renseigné"} · ${days} jours`;
+        })
+      });
+    }
+
+    const inactiveMembers = users.flatMap((user) => {
+      if (!activeUserIds.has(user.id) || !asIds(user.fields[uf.groupLinks]).includes(validSelectedGroupId)) return [];
+      const sentDates = opportunities
+        .filter((opportunity) => firstId(opportunity.fields[of.giver]) === user.id)
+        .map((opportunity) => recordDate(opportunity.fields[of.createdAt]))
+        .filter((date): date is Date => Boolean(date));
+      const lastSentAt = sentDates.length ? new Date(Math.max(...sentDates.map((date) => date.getTime()))) : null;
+      const memberSince = recordDate(user.fields[uf.createdAt]) ?? recordDate(user.fields[uf.testStartDate]);
+      const referenceDate = lastSentAt ?? memberSince;
+      if (!referenceDate) return [];
+      const days = Math.floor((now.getTime() - referenceDate.getTime()) / dayMs);
+      return days >= 45 ? [{ id: user.id, name: userNames.get(user.id) ?? "Adhérent sans nom", days, neverSent: !lastSentAt }] : [];
+    }).sort((a, b) => b.days - a.days);
+    if (inactiveMembers.length) {
+      presidentCoach.push({
+        id: "inactive-members",
+        priority: "important",
+        title: `Réactiver ${inactiveMembers.length} adhérent${inactiveMembers.length > 1 ? "s" : ""}`,
+        summary: `Aucune affaire envoyée depuis au moins 45 jours.`,
+        amount: null,
+        impact: "Remobiliser les membres et rééquilibrer la contribution au groupe.",
+        items: inactiveMembers.slice(0, 5).map((member) => `${member.name} · ${member.neverSent ? "aucune affaire envoyée" : `dernière affaire il y a ${member.days} jours`}`)
+      });
+    }
+
+    const quotesToFollow = opportunities.filter((opportunity) =>
+      opportunityGroup(opportunity, "receiver") === validSelectedGroupId && asString(opportunity.fields[of.stage]) === "Devis remis"
+    ).sort((a, b) => asNumber(b.fields[of.quoteAmountHT]) - asNumber(a.fields[of.quoteAmountHT]));
+    if (quotesToFollow.length) {
+      const amount = quotesToFollow.reduce((sum, opportunity) => sum + (asNumber(opportunity.fields[of.quoteAmountHT]) || asNumber(opportunity.fields[of.opportunityAmount])), 0);
+      const objective = groupObjectives.find((group) => group.id === validSelectedGroupId)?.monthlyRevenue;
+      const remaining = objective?.target ? Math.max(0, objective.target - objective.actual) : 0;
+      presidentCoach.push({
+        id: "quotes-to-follow",
+        priority: "opportunity",
+        title: `Accélérer ${quotesToFollow.length} devis en cours`,
+        summary: "Ces devis remis constituent le levier commercial le plus proche de la signature.",
+        amount,
+        impact: remaining > 0 ? `Il reste ${Math.round(remaining).toLocaleString("fr-FR")} € à sécuriser pour atteindre l’objectif mensuel.` : "Transformer ces devis pour dépasser ou consolider l’objectif mensuel.",
+        items: quotesToFollow.slice(0, 4).map((opportunity) => {
+          const receiverId = firstId(opportunity.fields[of.receiver]);
+          const label = asString(opportunity.fields[of.name]) || asString(opportunity.fields[of.reference]) || "Devis sans nom";
+          const amountValue = asNumber(opportunity.fields[of.quoteAmountHT]) || asNumber(opportunity.fields[of.opportunityAmount]);
+          return `${label} · ${userNames.get(receiverId ?? "") ?? "Adhérent non renseigné"}${amountValue ? ` · ${Math.round(amountValue).toLocaleString("fr-FR")} €` : ""}`;
+        })
+      });
+    }
+  }
+
   const maturityReferenceDate = new Date();
   const maturitySeries: MaturitySeries[] = groupRecords.flatMap((group) => {
     const openedAt = recordDate(group.fields[gf.createdAt]);
@@ -693,6 +781,7 @@ export async function getDashboardData(
     funnel,
     forecast: { days30, days60, days90, pipeline: forecastPipeline },
     groupObjectives,
+    presidentCoach: presidentCoach.slice(0, 3),
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }
