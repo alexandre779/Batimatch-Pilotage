@@ -6,6 +6,7 @@
     "nodejs_compat",
     "nodejs_compat_populate_process_env"
   ],
+  "keep_vars": true,
   "main": "vinext/server/fetch-handler",
   "assets": {
     "directory": "dist/client",
