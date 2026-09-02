@@ -16,11 +16,18 @@ function NetworkPresentation({ data, period, backHref }: { data: Awaited<ReturnT
   const topRevenue = [...data.groups].sort((a, b) => b.revenueWon - a.revenueWon).slice(0, 3);
   const topSent = [...data.groups].sort((a, b) => b.opportunitiesSent - a.opportunitiesSent).slice(0, 3);
   const maxRevenue = topRevenue[0]?.revenueWon || 1;
+  const commonMaturityMonth = Math.min(12, ...data.maturitySeries.map((series) => series.points.length));
   const maturity = data.maturitySeries.map((series) => {
-    const point = [...series.points].reverse().find((candidate) => candidate.revenue > 0 || candidate.opportunities > 0 || candidate.activeMembers > 0) ?? series.points[0];
-    return { ...series, point };
-  }).filter((series) => series.point);
-  const maxMaturityRevenue = Math.max(1, ...maturity.map((series) => series.point?.revenue ?? 0));
+    const comparablePoints = series.points.slice(0, commonMaturityMonth);
+    return {
+      id: series.id,
+      name: series.name,
+      revenue: comparablePoints.reduce((sum, point) => sum + point.revenue, 0),
+      opportunities: comparablePoints.reduce((sum, point) => sum + point.opportunities, 0),
+      activeMembers: comparablePoints.reduce((sum, point) => sum + point.activeMembers, 0)
+    };
+  }).sort((a, b) => b.revenue - a.revenue);
+  const maxMaturityRevenue = Math.max(1, ...maturity.map((series) => series.revenue));
   const revenueTarget = data.groupObjectives.reduce((sum, group) => sum + group.monthlyRevenue.target, 0);
   const revenueActual = data.groupObjectives.reduce((sum, group) => sum + group.monthlyRevenue.actual, 0);
   const targetProgress = revenueTarget ? revenueActual / revenueTarget : 0;
@@ -50,11 +57,11 @@ function NetworkPresentation({ data, period, backHref }: { data: Awaited<ReturnT
     </section>
 
     <section className="presentationSlide networkGrowthSlide" id="slide-3">
-      <div className="presentationSlideHeader"><div><p className="eyebrow">02 · CROISSANCE COMPARÉE</p><h2>Les groupes à âge équivalent</h2></div><span>Depuis leur ouverture</span></div>
+      <div className="presentationSlideHeader"><div><p className="eyebrow">02 · CROISSANCE COMPARÉE</p><h2>La performance au même stade</h2><p className="networkSlideExplanation">Tous les groupes sont comparés sur leurs {commonMaturityMonth === 1 ? "30 premiers jours" : `${commonMaturityMonth} premiers mois`}, quelle que soit leur date d’ouverture.</p></div><span>Au terme de M{commonMaturityMonth}</span></div>
       <div className="networkGrowthList">{maturity.map((series) => <article key={series.id}>
-        <header><strong>{series.name}</strong><span>M{series.point?.month}</span></header>
-        <div className="networkGrowthTrack"><i style={{ width: `${(series.point?.revenue ?? 0) / maxMaturityRevenue * 100}%` }} /></div>
-        <footer><strong>{euro.format(series.point?.revenue ?? 0)}</strong><span>{number.format(series.point?.activeMembers ?? 0)} adhérents · {number.format(series.point?.opportunities ?? 0)} affaires</span></footer>
+        <header><strong>{series.name}</strong><span>M{commonMaturityMonth}</span></header>
+        <div className="networkGrowthTrack"><i style={{ width: `${series.revenue / maxMaturityRevenue * 100}%` }} /></div>
+        <footer><strong>{euro.format(series.revenue)}</strong><span>{number.format(series.activeMembers)} adhérent{series.activeMembers > 1 ? "s" : ""} · {number.format(series.opportunities)} affaire{series.opportunities > 1 ? "s" : ""}</span></footer>
       </article>)}</div>
     </section>
 

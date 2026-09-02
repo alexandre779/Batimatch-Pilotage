@@ -536,6 +536,7 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
 .meetingPodium .meetingPodiumEmpty { display: block; padding: 20px 0; color: var(--muted); font-size: 10px; }
 .meetingClosing { margin-top: 35px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 11px; }
 .networkGrowthSlide { background: white; }
+.networkSlideExplanation { max-width: 720px; margin: 10px 0 0; color: var(--muted); font-size: 12px; font-weight: 400; letter-spacing: 0; }
 .networkGrowthList { display: grid; gap: clamp(10px,1.6vh,18px); }
 .networkGrowthList article { padding: 15px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 8px 24px rgba(16,47,79,.05); }
 .networkGrowthList header, .networkGrowthList footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
