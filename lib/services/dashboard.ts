@@ -26,6 +26,7 @@ export type GroupPerformance = {
 
 export type DashboardKpis = {
   activeMembers: number;
+  pendingTreatment: number;
   opportunitiesSent: number;
   opportunitiesReceived: number;
   opportunitiesWon: number;
@@ -90,6 +91,7 @@ export type DashboardData = {
     guests: number;
   } | null;
   maturitySeries: MaturitySeries[];
+  pendingTreatmentByMember: Array<{ id: string; name: string; count: number }>;
   selectedGroupName: string | null;
 };
 
@@ -97,6 +99,7 @@ const CLOSED_STAGES = new Set(["Gagnée", "Perdue", "Annulée", "Déclinée"]);
 const WON_STAGE = "Gagnée";
 const DECLINED_STAGE = "Déclinée";
 const LOST_STAGE = "Perdue";
+const PENDING_TREATMENT_STAGE = "A traiter";
 
 const asNumber = (value: unknown) => (typeof value === "number" ? value : 0);
 const asString = (value: unknown) => (typeof value === "string" ? value : "");
@@ -239,6 +242,10 @@ export async function getDashboardData(
     const pipeline = includePipeline
       ? opportunities.filter((o) => (!groupId || opportunityGroup(o, "receiver") === groupId) && !CLOSED_STAGES.has(asString(o.fields[of.stage])))
       : [];
+    const pendingTreatment = opportunities.filter((o) =>
+      (!groupId || opportunityGroup(o, "receiver") === groupId) &&
+      asString(o.fields[of.stage]) === PENDING_TREATMENT_STAGE
+    ).length;
 
     const revenueWon = won.reduce((sum, o) => sum + asNumber(o.fields[of.quoteAmountHT]), 0);
     const receivedVolume = received.reduce((sum, o) => sum + asNumber(o.fields[of.opportunityAmount]), 0);
@@ -256,6 +263,7 @@ export async function getDashboardData(
 
     return {
       activeMembers,
+      pendingTreatment,
       opportunitiesSent: sent.length,
       opportunitiesReceived: received.length,
       opportunitiesWon: won.length,
@@ -292,6 +300,21 @@ export async function getDashboardData(
   }).sort((a, b) => b.revenueWon - a.revenueWon);
 
   const validSelectedGroupId = selectedGroupId !== "all" && groupNames.has(selectedGroupId) ? selectedGroupId : null;
+
+  const pendingByMember = new Map<string, { id: string; name: string; count: number }>();
+  for (const opportunity of opportunities) {
+    if (asString(opportunity.fields[of.stage]) !== PENDING_TREATMENT_STAGE) continue;
+    if (validSelectedGroupId && opportunityGroup(opportunity, "receiver") !== validSelectedGroupId) continue;
+    const receiverId = firstId(opportunity.fields[of.receiver]);
+    if (!receiverId) continue;
+    const current = pendingByMember.get(receiverId) ?? {
+      id: receiverId,
+      name: userNames.get(receiverId) ?? "Adhérent sans nom",
+      count: 0
+    };
+    current.count += 1;
+    pendingByMember.set(receiverId, current);
+  }
 
   const maturityReferenceDate = new Date();
   const maturitySeries: MaturitySeries[] = groupRecords.flatMap((group) => {
@@ -460,6 +483,7 @@ export async function getDashboardData(
     development: development(bounds.start, bounds.end),
     previousDevelopment: bounds.previousStart ? development(bounds.previousStart, bounds.previousEnd) : null,
     maturitySeries,
+    pendingTreatmentByMember: [...pendingByMember.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr")),
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }

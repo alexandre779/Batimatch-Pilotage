@@ -44,6 +44,15 @@ select, input { width: 100%; background: var(--surface); color: var(--text); }
 button { border-color: var(--accent); background: var(--accent); color: white; cursor: pointer; font-weight: 800; }
 button:hover { filter: brightness(.96); }
 .notice { background: #fff4eb; border: 1px solid #f2c49f; border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; }
+.pendingActionCard { margin-bottom: 28px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; color: white; background: linear-gradient(120deg, #102f4f 0%, #173d62 72%, #214d74 100%); border-radius: 12px; border-left: 6px solid var(--accent); box-shadow: 0 10px 28px rgba(16,47,79,.14); }
+.pendingActionCard h2 { margin-top: 4px; }
+.pendingActionCard > div:first-child > p:not(.eyebrow) { margin: 7px 0 0; color: rgba(255,255,255,.68); font-size: 12px; }
+.pendingMemberSelect { width: min(430px, 100%); margin-top: 15px; display: block; }
+.pendingMemberSelect > span { display: block; margin-bottom: 5px; color: rgba(255,255,255,.7); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.pendingMemberSelect select { padding: 10px 12px; color: var(--dark); background: white; font-size: 12px; }
+.pendingActionValue { min-width: 118px; padding: 10px 18px; text-align: center; color: var(--dark); background: white; border-radius: 10px; }
+.pendingActionValue strong { display: block; font-family: Montserrat, Arial, sans-serif; font-size: 34px; line-height: 1; }
+.pendingActionValue span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
 .sectionBlock { margin-bottom: 28px; }
 .sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 14px; }
 .comparisonNote { color: var(--muted); font-size: 11px; }
@@ -133,6 +142,8 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
   .dateRange { grid-template-columns: 1fr 1fr; }
   .filterIntro { padding: 4px 2px 8px; }
   .sectionHeading { align-items: start; flex-direction: column; gap: 6px; }
+  .pendingActionCard { align-items: stretch; flex-direction: column; }
+  .pendingActionValue { width: 100%; }
   .kpisPrimary, .kpisSecondary, .recruitmentKpis { grid-template-columns: 1fr; }
   .kpiFeatured { min-height: 126px; }
   .podiumCard { padding-left: 14px; padding-right: 14px; }

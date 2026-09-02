@@ -158,6 +158,29 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
         )}
 
+        {access.role === "president" && (
+          <section className="pendingActionCard" aria-label="Affaires en attente de traitement">
+            <div>
+              <p className="eyebrow">À TRAITER</p>
+              <h2>Affaires en attente de prise en charge</h2>
+              <p>Opportunités reçues qui nécessitent encore une première action.</p>
+              <label className="pendingMemberSelect">
+                <span>Voir les adhérents concernés</span>
+                <select defaultValue="" aria-label="Adhérents ayant des affaires à traiter">
+                  <option value="" disabled>{data?.pendingTreatmentByMember.length ? "Sélectionner un adhérent" : "Aucune affaire en attente"}</option>
+                  {data?.pendingTreatmentByMember.map((member) => (
+                    <option value={member.id} key={member.id}>{member.name} — {member.count} {member.count > 1 ? "affaires" : "affaire"}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="pendingActionValue">
+              <strong>{number.format(kpis?.pendingTreatment ?? 0)}</strong>
+              <span>{(kpis?.pendingTreatment ?? 0) > 1 ? "affaires" : "affaire"}</span>
+            </div>
+          </section>
+        )}
+
         <section className="sectionBlock">
           <div className="sectionHeading">
             <div><p className="eyebrow">L’ESSENTIEL</p><h2>Résultats business</h2></div>
