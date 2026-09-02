@@ -92,6 +92,7 @@ export type DashboardData = {
   } | null;
   maturitySeries: MaturitySeries[];
   pendingTreatmentByMember: Array<{ id: string; name: string; count: number }>;
+  pendingTreatmentByGroup: Array<{ id: string; name: string; count: number }>;
   selectedGroupName: string | null;
 };
 
@@ -302,9 +303,20 @@ export async function getDashboardData(
   const validSelectedGroupId = selectedGroupId !== "all" && groupNames.has(selectedGroupId) ? selectedGroupId : null;
 
   const pendingByMember = new Map<string, { id: string; name: string; count: number }>();
+  const pendingByGroup = new Map<string, { id: string; name: string; count: number }>();
   for (const opportunity of opportunities) {
     if (asString(opportunity.fields[of.stage]) !== PENDING_TREATMENT_STAGE) continue;
-    if (validSelectedGroupId && opportunityGroup(opportunity, "receiver") !== validSelectedGroupId) continue;
+    const receiverGroupId = opportunityGroup(opportunity, "receiver");
+    if (receiverGroupId) {
+      const currentGroup = pendingByGroup.get(receiverGroupId) ?? {
+        id: receiverGroupId,
+        name: groupNames.get(receiverGroupId) ?? "Groupe sans nom",
+        count: 0
+      };
+      currentGroup.count += 1;
+      pendingByGroup.set(receiverGroupId, currentGroup);
+    }
+    if (validSelectedGroupId && receiverGroupId !== validSelectedGroupId) continue;
     const receiverId = firstId(opportunity.fields[of.receiver]);
     if (!receiverId) continue;
     const current = pendingByMember.get(receiverId) ?? {
@@ -484,6 +496,7 @@ export async function getDashboardData(
     previousDevelopment: bounds.previousStart ? development(bounds.previousStart, bounds.previousEnd) : null,
     maturitySeries,
     pendingTreatmentByMember: [...pendingByMember.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr")),
+    pendingTreatmentByGroup: [...pendingByGroup.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr")),
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };
 }

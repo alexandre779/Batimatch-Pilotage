@@ -114,6 +114,9 @@ export default async function Home({ searchParams }: PageProps) {
   const groups = data?.groups ?? [];
   const kpis = data?.kpis;
   const previous = data?.previousKpis;
+  const pendingTreatmentCount = access.role === "network"
+    ? data?.pendingTreatmentByGroup.reduce((sum, group) => sum + group.count, 0) ?? 0
+    : kpis?.pendingTreatment ?? 0;
   const visibleGroups = groupId === "all" ? groups : groups.filter((group) => group.id === groupId);
   const periodLabel = period === "custom"
     ? formatDateRange(startDate, endDate)
@@ -158,25 +161,25 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
         )}
 
-        {access.role === "president" && (
+        {data && (
           <section className="pendingActionCard" aria-label="Affaires en attente de traitement">
             <div>
               <p className="eyebrow">À TRAITER</p>
               <h2>Affaires en attente de prise en charge</h2>
               <p>Opportunités reçues qui nécessitent encore une première action.</p>
               <label className="pendingMemberSelect">
-                <span>Voir les adhérents concernés</span>
-                <select defaultValue="" aria-label="Adhérents ayant des affaires à traiter">
-                  <option value="" disabled>{data?.pendingTreatmentByMember.length ? "Sélectionner un adhérent" : "Aucune affaire en attente"}</option>
-                  {data?.pendingTreatmentByMember.map((member) => (
-                    <option value={member.id} key={member.id}>{member.name} — {member.count} {member.count > 1 ? "affaires" : "affaire"}</option>
+                <span>{access.role === "president" ? "Voir les adhérents concernés" : "Voir le détail par groupe"}</span>
+                <select defaultValue="" aria-label={access.role === "president" ? "Adhérents ayant des affaires à traiter" : "Groupes ayant des affaires à traiter"}>
+                  <option value="" disabled>{(access.role === "president" ? data.pendingTreatmentByMember : data.pendingTreatmentByGroup).length ? (access.role === "president" ? "Sélectionner un adhérent" : "Sélectionner un groupe") : "Aucune affaire en attente"}</option>
+                  {(access.role === "president" ? data.pendingTreatmentByMember : data.pendingTreatmentByGroup).map((item) => (
+                    <option value={item.id} key={item.id}>{item.name} — {item.count} {item.count > 1 ? "affaires" : "affaire"}</option>
                   ))}
                 </select>
               </label>
             </div>
             <div className="pendingActionValue">
-              <strong>{number.format(kpis?.pendingTreatment ?? 0)}</strong>
-              <span>{(kpis?.pendingTreatment ?? 0) > 1 ? "affaires" : "affaire"}</span>
+              <strong>{number.format(pendingTreatmentCount)}</strong>
+              <span>{pendingTreatmentCount > 1 ? "affaires" : "affaire"}</span>
             </div>
           </section>
         )}
