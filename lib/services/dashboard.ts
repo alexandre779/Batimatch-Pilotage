@@ -17,7 +17,8 @@ export type GroupPerformance = {
   opportunitiesReceived: number;
   wonOpportunities: number;
   declinedOpportunities: number;
-  conversionRate: number;
+  closingRate: number;
+  quoteConversionRate: number;
   revenueWon: number;
   receivedVolume: number;
   pipelineValue: number;
@@ -34,7 +35,8 @@ export type DashboardKpis = {
   revenueWon: number;
   receivedVolume: number;
   pipelineValue: number;
-  conversionRate: number;
+  closingRate: number;
+  quoteConversionRate: number;
   averageCloseDays: number;
 };
 
@@ -132,6 +134,7 @@ export async function getDashboardData(
       of.stage,
       of.createdAt,
       of.closedAt,
+      of.quoteDate,
       of.opportunityAmount,
       of.quoteAmountHT
     ])
@@ -152,6 +155,10 @@ export async function getDashboardData(
   const closedOpportunities = opportunities.filter((opportunity) =>
     isInPeriod(opportunity.fields[of.closedAt], bounds.start, bounds.end)
   );
+  const quotedOpportunities = opportunities.filter((opportunity) =>
+    recordDate(opportunity.fields[of.quoteDate]) &&
+    isInPeriod(opportunity.fields[of.quoteDate], bounds.start, bounds.end)
+  );
   const previousOpportunities = bounds.previousStart
     ? opportunities.filter((opportunity) =>
         isInPeriod(opportunity.fields[of.createdAt], bounds.previousStart, bounds.previousEnd)
@@ -160,6 +167,11 @@ export async function getDashboardData(
   const previousClosedOpportunities = bounds.previousStart
     ? opportunities.filter((opportunity) =>
         isInPeriod(opportunity.fields[of.closedAt], bounds.previousStart, bounds.previousEnd)
+      )
+    : [];
+  const previousQuotedOpportunities = bounds.previousStart
+    ? opportunities.filter((opportunity) =>
+        isInPeriod(opportunity.fields[of.quoteDate], bounds.previousStart, bounds.previousEnd)
       )
     : [];
 
@@ -171,7 +183,7 @@ export async function getDashboardData(
     return userGroups.get(userId)?.[0] ?? null;
   }
 
-  function compute(activitySource: typeof opportunities, outcomeSource: typeof opportunities, groupId: string | null, includePipeline = true): DashboardKpis {
+  function compute(activitySource: typeof opportunities, outcomeSource: typeof opportunities, quoteSource: typeof opportunities, groupId: string | null, includePipeline = true): DashboardKpis {
     const memberIds = groupId
       ? users.filter((u) => asIds(u.fields[uf.groupLinks]).includes(groupId)).map((u) => u.id)
       : users.map((u) => u.id);
@@ -182,6 +194,8 @@ export async function getDashboardData(
     const outcomes = outcomeSource.filter((o) => !groupId || opportunityGroup(o, "receiver") === groupId);
     const won = outcomes.filter((o) => asString(o.fields[of.stage]) === WON_STAGE);
     const lost = outcomes.filter((o) => asString(o.fields[of.stage]) === LOST_STAGE);
+    const quoted = quoteSource.filter((o) => !groupId || opportunityGroup(o, "receiver") === groupId);
+    const quotedWon = quoted.filter((o) => asString(o.fields[of.stage]) === WON_STAGE);
     const declined = received.filter((o) => asString(o.fields[of.stage]) === DECLINED_STAGE);
     const pipeline = includePipeline
       ? opportunities.filter((o) => (!groupId || opportunityGroup(o, "receiver") === groupId) && !CLOSED_STAGES.has(asString(o.fields[of.stage])))
@@ -212,7 +226,8 @@ export async function getDashboardData(
       revenueWon,
       receivedVolume,
       pipelineValue,
-      conversionRate: decided ? won.length / decided : 0,
+      closingRate: decided ? won.length / decided : 0,
+      quoteConversionRate: quoted.length ? quotedWon.length / quoted.length : 0,
       averageCloseDays: closeDurations.length
         ? closeDurations.reduce((sum, days) => sum + days, 0) / closeDurations.length
         : 0
@@ -220,7 +235,7 @@ export async function getDashboardData(
   }
 
   const groups: GroupPerformance[] = groupRecords.map((group) => {
-    const kpis = compute(filteredOpportunities, closedOpportunities, group.id);
+    const kpis = compute(filteredOpportunities, closedOpportunities, quotedOpportunities, group.id);
     return {
       id: group.id,
       name: asString(group.fields[gf.name]),
@@ -229,7 +244,8 @@ export async function getDashboardData(
       opportunitiesReceived: kpis.opportunitiesReceived,
       wonOpportunities: kpis.opportunitiesWon,
       declinedOpportunities: kpis.declinedOpportunities,
-      conversionRate: kpis.conversionRate,
+      closingRate: kpis.closingRate,
+      quoteConversionRate: kpis.quoteConversionRate,
       revenueWon: kpis.revenueWon,
       receivedVolume: kpis.receivedVolume,
       pipelineValue: kpis.pipelineValue
@@ -282,8 +298,8 @@ export async function getDashboardData(
 
   return {
     groups,
-    kpis: compute(filteredOpportunities, closedOpportunities, validSelectedGroupId),
-    previousKpis: bounds.previousStart ? compute(previousOpportunities, previousClosedOpportunities, validSelectedGroupId, false) : null,
+    kpis: compute(filteredOpportunities, closedOpportunities, quotedOpportunities, validSelectedGroupId),
+    previousKpis: bounds.previousStart ? compute(previousOpportunities, previousClosedOpportunities, previousQuotedOpportunities, validSelectedGroupId, false) : null,
     trends: [...trendMap.values()].sort((a, b) => a.key.localeCompare(b.key)),
     selectedGroupName: validSelectedGroupId ? groupNames.get(validSelectedGroupId) ?? null : null
   };

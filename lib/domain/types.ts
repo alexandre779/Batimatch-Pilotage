@@ -11,7 +11,8 @@ export type GroupSummary = {
   opportunities: number;
   wonOpportunities: number;
   declinedOpportunities: number;
-  conversionRate: number;
+  closingRate: number;
+  quoteConversionRate: number;
   revenue: number;
   receivedVolume: number;
 };
@@ -22,5 +23,6 @@ export type NetworkKpis = {
   opportunitiesWon: number;
   revenueWon: number;
   receivedVolume: number;
-  conversionRate: number;
+  closingRate: number;
+  quoteConversionRate: number;
 };

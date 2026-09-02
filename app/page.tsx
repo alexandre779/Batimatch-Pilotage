@@ -119,7 +119,8 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
           <div className="kpis kpisPrimary">
             <Kpi featured label="CA gagné" value={euro.format(kpis?.revenueWon ?? 0)} hint="devis HT gagnés" current={kpis?.revenueWon} previous={previous?.revenueWon} />
-            <Kpi featured label="Transformation" value={percent.format(kpis?.conversionRate ?? 0)} hint="gagnées / affaires conclues" current={kpis?.conversionRate} previous={previous?.conversionRate} />
+            <Kpi featured label="Taux de closing" value={percent.format(kpis?.closingRate ?? 0)} hint="gagnées / affaires conclues" current={kpis?.closingRate} previous={previous?.closingRate} />
+            <Kpi featured label="Devis → commande" value={percent.format(kpis?.quoteConversionRate ?? 0)} hint="gagnées / devis remis" current={kpis?.quoteConversionRate} previous={previous?.quoteConversionRate} />
             <Kpi featured label="Affaires gagnées" value={number.format(kpis?.opportunitiesWon ?? 0)} current={kpis?.opportunitiesWon} previous={previous?.opportunitiesWon} />
             <Kpi featured label="Pipeline ouvert" value={euro.format(kpis?.pipelineValue ?? 0)} hint={`${number.format(kpis?.openOpportunities ?? 0)} affaire(s) en cours`} />
           </div>
@@ -165,7 +166,8 @@ export default async function Home({ searchParams }: PageProps) {
                 <th>Reçues</th>
                 <th>Gagnées</th>
                 <th>Déclinées</th>
-                <th>Taux transfo.</th>
+                <th>Closing</th>
+                <th>Devis → commande</th>
                 <th>CA gagné</th>
                 <th>Pipeline</th>
               </tr>
@@ -179,12 +181,13 @@ export default async function Home({ searchParams }: PageProps) {
                   <td>{number.format(group.opportunitiesReceived)}</td>
                   <td>{number.format(group.wonOpportunities)}</td>
                   <td>{number.format(group.declinedOpportunities)}</td>
-                  <td>{percent.format(group.conversionRate)}</td>
+                  <td>{percent.format(group.closingRate)}</td>
+                  <td>{percent.format(group.quoteConversionRate)}</td>
                   <td>{euro.format(group.revenueWon)}</td>
                   <td>{euro.format(group.pipelineValue)}</td>
                 </tr>
               ))}
-              {!visibleGroups.length && <tr><td colSpan={9} className="empty">Aucune donnée disponible sur ce périmètre.</td></tr>}
+              {!visibleGroups.length && <tr><td colSpan={10} className="empty">Aucune donnée disponible sur ce périmètre.</td></tr>}
             </tbody>
           </table>
         </div>
