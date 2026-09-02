@@ -89,7 +89,7 @@ export default async function FinancesPage({ searchParams }: { searchParams: Pro
       <article><span>Cotisations à facturer</span><strong>{euro.format(data.membershipsToInvoice)}</strong><small>{number.format(data.membershipsToInvoiceCount)} dossier{data.membershipsToInvoiceCount > 1 ? "s" : ""} « En attente »</small></article>
       <article><span>Rétributions à facturer</span><strong>{euro.format(data.contributionsToInvoice)}</strong><small>statut Airtable « À facturer »</small></article>
       <article><span>Rétributions à encaisser</span><strong>{euro.format(contributionsDue)}</strong><small>{euro.format(data.contributionsPaid)} encaissés</small></article>
-      <article><span>Commissions à payer</span><strong>{euro.format(commissionsDue)}</strong><small>{euro.format(data.commissionsPaid)} payés</small></article>
+      <article><span>Commissions à provisionner</span><strong>{euro.format(commissionsDue)}</strong><small>dont {euro.format(data.membershipCommissions)} pour les présidents</small></article>
       <article><span>Solde net à venir</span><strong>{euro.format(data.membershipsToInvoice + contributionsDue - commissionsDue)}</strong><small>cotisations et rétributions moins commissions</small></article>
     </section>
 
@@ -100,11 +100,11 @@ export default async function FinancesPage({ searchParams }: { searchParams: Pro
 
     <section className="financeTablePanel">
       <div><p className="eyebrow">VENTILATION</p><h2>Situation par groupe</h2></div>
-      <div className="tableWrap"><table><thead><tr><th>Groupe</th><th>Adhésions signées</th><th>Rétributions générées</th><th>À encaisser</th><th>Commissions générées</th><th>À payer</th><th>Solde net</th></tr></thead><tbody>
-        {data.groups.map((group) => { const contributionsLeft = group.contributions - group.contributionsPaid; const commissionsLeft = group.commissions - group.commissionsPaid; return <tr key={group.id}><td><strong>{group.name}</strong></td><td>{euro.format(group.memberships)} <small>({group.membershipCount})</small></td><td>{euro.format(group.contributions)}</td><td>{euro.format(contributionsLeft)}</td><td>{euro.format(group.commissions)}</td><td>{euro.format(commissionsLeft)}</td><td><strong>{euro.format(contributionsLeft - commissionsLeft)}</strong></td></tr>; })}
-        {!data.groups.length && <tr><td colSpan={7} className="empty">Aucun mouvement financier sur cette période.</td></tr>}
+      <div className="tableWrap"><table><thead><tr><th>Groupe</th><th>Cotisations générées</th><th>Commission président</th><th>Rétributions générées</th><th>À encaisser</th><th>Commissions totales</th><th>À provisionner</th><th>Solde net généré</th></tr></thead><tbody>
+        {data.groups.map((group) => { const contributionsLeft = group.contributions - group.contributionsPaid; const commissionsLeft = group.commissions - group.commissionsPaid; return <tr key={group.id}><td><strong>{group.name}</strong></td><td>{euro.format(group.memberships)} <small>({group.membershipCount})</small></td><td>{euro.format(group.membershipCommissions)}</td><td>{euro.format(group.contributions)}</td><td>{euro.format(contributionsLeft)}</td><td>{euro.format(group.commissions)}</td><td>{euro.format(commissionsLeft)}</td><td><strong>{euro.format(group.memberships + group.contributions - group.commissions)}</strong></td></tr>; })}
+        {!data.groups.length && <tr><td colSpan={8} className="empty">Aucun mouvement financier sur cette période.</td></tr>}
       </tbody></table></div>
     </section>
-    <p className="financeNote">Les adhésions proviennent de la table Cotisations : les dossiers « En attente » sont à facturer et les dossiers annulés sont exclus. Le montant final Airtable est utilisé en priorité, puis le montant de base ; à défaut, le tarif standard de 400 € est appliqué. « À facturer » est inclus dans les rétributions restant à encaisser.</p>
+    <p className="financeNote">Les cotisations sont encaissées à 100 % par Bâtimatch et génèrent une commission de 50 % au président du groupe. Les dossiers « En attente » sont à facturer et les dossiers annulés sont exclus. Le montant final Airtable est utilisé en priorité, puis le montant de base ; à défaut, le tarif standard de 400 € est appliqué. Faute de statut de reversement dans Airtable, les commissions président sont présentées comme des montants à provisionner.</p>
   </main>;
 }

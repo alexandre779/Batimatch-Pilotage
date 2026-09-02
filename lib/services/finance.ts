@@ -9,6 +9,7 @@ export type FinanceGroup = {
   name: string;
   memberships: number;
   membershipCount: number;
+  membershipCommissions: number;
   contributions: number;
   contributionsPaid: number;
   commissions: number;
@@ -18,6 +19,7 @@ export type FinanceGroup = {
 export type FinanceData = {
   memberships: number;
   membershipCount: number;
+  membershipCommissions: number;
   membershipsPaid: number;
   membershipsToInvoice: number;
   membershipsToInvoiceCount: number;
@@ -91,26 +93,30 @@ export async function getFinanceData(range: { start: Date | null; end: Date | nu
   const groupRow = (group: { id: string; name: string } | null) => {
     const key = group?.id ?? "unassigned";
     const resolvedName = key === "unassigned" ? "Groupe non renseigné" : groupNames.get(key) ?? group?.name ?? key;
-    if (!groupMap.has(key)) groupMap.set(key, { id: key, name: resolvedName, memberships: 0, membershipCount: 0, contributions: 0, contributionsPaid: 0, commissions: 0, commissionsPaid: 0 });
+    if (!groupMap.has(key)) groupMap.set(key, { id: key, name: resolvedName, memberships: 0, membershipCount: 0, membershipCommissions: 0, contributions: 0, contributionsPaid: 0, commissions: 0, commissionsPaid: 0 });
     return groupMap.get(key)!;
   };
 
-  let membershipTotal = 0, membershipCount = 0, membershipsPaid = 0, membershipsToInvoice = 0, membershipsToInvoiceCount = 0;
+  let membershipTotal = 0, membershipCount = 0, membershipCommissions = 0, membershipsPaid = 0, membershipsToInvoice = 0, membershipsToInvoiceCount = 0;
   for (const record of memberships) {
     const status = text(record.fields[cf.status] as SelectValue);
     const accountingDate = record.fields[cf.issuedAt] ?? record.fields[cf.startDate] ?? record.fields[cf.testStartDate] ?? record.createdTime;
     if (/annul/i.test(status) || !inRange(accountingDate, range.start, range.end)) continue;
     const value = amount(record.fields[cf.finalAmount]) || amount(record.fields[cf.baseAmount]) || 400;
+    const presidentCommission = value / 2;
     membershipTotal += value;
     membershipCount += 1;
+    membershipCommissions += presidentCommission;
     if (/pay[eé]e?/i.test(status)) membershipsPaid += value;
     if (/attente/i.test(status)) { membershipsToInvoice += value; membershipsToInvoiceCount += 1; }
     const row = groupRow(linkedGroup(record.fields[cf.group]));
     row.memberships += value;
     row.membershipCount += 1;
+    row.membershipCommissions += presidentCommission;
+    row.commissions += presidentCommission;
   }
 
-  let contributions = 0, contributionsPaid = 0, contributionsToInvoice = 0, commissions = 0, commissionsPaid = 0;
+  let contributions = 0, contributionsPaid = 0, contributionsToInvoice = 0, commissions = membershipCommissions, commissionsPaid = 0;
   let overdueContributions = 0, overdueContributionCount = 0, overdueCommissions = 0, overdueCommissionCount = 0;
   const now = new Date();
   for (const record of opportunities) {
@@ -135,5 +141,5 @@ export async function getFinanceData(range: { start: Date | null; end: Date | nu
     if (commissionPaid) row.commissionsPaid += commission;
   }
 
-  return { memberships: membershipTotal, membershipCount, membershipsPaid, membershipsToInvoice, membershipsToInvoiceCount, contributions, contributionsPaid, contributionsToInvoice, commissions, commissionsPaid, overdueContributions, overdueContributionCount, overdueCommissions, overdueCommissionCount, groups: [...groupMap.values()].sort((a, b) => b.contributions - a.contributions) };
+  return { memberships: membershipTotal, membershipCount, membershipCommissions, membershipsPaid, membershipsToInvoice, membershipsToInvoiceCount, contributions, contributionsPaid, contributionsToInvoice, commissions, commissionsPaid, overdueContributions, overdueContributionCount, overdueCommissions, overdueCommissionCount, groups: [...groupMap.values()].sort((a, b) => b.contributions - a.contributions) };
 }
