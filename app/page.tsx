@@ -5,7 +5,6 @@ import { getPilotageAccess } from "@/lib/auth/access";
 import { DashboardFilters } from "@/app/components/dashboard-filters";
 import { TrendChart } from "@/app/components/trend-chart";
 import { MaturityChart } from "@/app/components/maturity-chart";
-import { FranceGroupsMap } from "@/app/components/france-groups-map";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
@@ -194,10 +193,6 @@ export default async function Home({ searchParams }: PageProps) {
           { key: "revenueWon", label: "CA gagné", color: "#f18748" }
         ]} formatValue={(value) => euro.format(value)} />
         </section>}
-
-        {access.role === "network" && data && (
-          <FranceGroupsMap groups={data.groups} period={period} startDate={startDate} endDate={endDate} />
-        )}
 
         {access.role === "network" && data && <MaturityChart series={data.maturitySeries} />}
 
