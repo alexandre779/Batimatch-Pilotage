@@ -443,16 +443,25 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
 .meetingActions li p { margin: 5px 0 0; color: var(--muted); font-size: 9px; line-height: 1.4; }
 .meetingAllClear { margin-top: 15px; padding: 25px; text-align: center; background: #e8f5ef; border-radius: 10px; }
 .meetingAllClear p { color: var(--muted); }
-.meetingChampions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
-.meetingChampions article { min-height: 360px; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: white; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 16px 38px rgba(16,47,79,.1); }
-.meetingChampions article:first-child { border-top: 7px solid var(--accent); }
-.meetingChampions article:nth-child(2) { color: white; background: var(--dark); border-color: var(--dark); }
-.meetingMedal { width: 48px; height: 48px; display: grid; place-items: center; color: white; background: var(--accent); border: 5px solid #fff0e7; border-radius: 50%; font-family: Montserrat,Arial,sans-serif; font-weight: 900; }
-.meetingChampions p { margin: 18px 0 0; color: var(--accent); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
-.meetingChampions h3 { margin: 10px 0 0; font-family: Montserrat,Arial,sans-serif; font-size: clamp(25px,3vw,42px); }
-.meetingChampions strong { margin-top: 20px; font-family: Montserrat,Arial,sans-serif; font-size: 32px; }
-.meetingChampions small { margin-top: 7px; color: var(--muted); }
-.meetingChampions article:nth-child(2) small { color: rgba(255,255,255,.6); }
+.meetingPodiumGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; }
+.meetingPodium { padding: 22px; background: white; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 28px rgba(16,47,79,.08); }
+.meetingPodium:nth-child(1), .meetingPodium:nth-child(4) { border-top: 5px solid var(--accent); }
+.meetingPodium:nth-child(2), .meetingPodium:nth-child(3) { border-top: 5px solid var(--dark); }
+.meetingPodium > header { display: flex; align-items: start; justify-content: space-between; gap: 15px; }
+.meetingPodium > header p { margin: 0; font-family: Montserrat,Arial,sans-serif; font-size: 17px; font-weight: 900; }
+.meetingPodium > header span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+.meetingPodium > header > b { padding: 5px 7px; color: var(--accent); background: #fff0e7; border-radius: 999px; font-size: 8px; }
+.meetingPodium ol { margin: 16px 0 0; padding: 0; list-style: none; }
+.meetingPodium li { min-height: 52px; display: grid; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 10px; border-top: 1px solid var(--line); }
+.meetingRank { width: 27px; height: 27px; display: grid; place-items: center; color: white; background: #8b99a6; border-radius: 50%; font-size: 10px; font-weight: 900; }
+.meetingRank1 { background: var(--accent); box-shadow: 0 4px 10px rgba(241,135,72,.3); }
+.meetingRank3 { background: #b6734f; }
+.meetingPodium li > strong { overflow: hidden; text-overflow: ellipsis; font-family: Montserrat,Arial,sans-serif; font-size: 11px; white-space: nowrap; }
+.meetingPodium li > div { text-align: right; }
+.meetingPodium li > div b, .meetingPodium li > div small { display: block; }
+.meetingPodium li > div b { font-family: Montserrat,Arial,sans-serif; font-size: 11px; }
+.meetingPodium li > div small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.meetingPodium .meetingPodiumEmpty { display: block; padding: 20px 0; color: var(--muted); font-size: 10px; }
 .meetingClosing { margin-top: 35px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 11px; }
 @keyframes cardArrival { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes ringReveal { from { opacity: 0; transform: scale(.88) rotate(-10deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
@@ -518,8 +527,7 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
   .meetingGoalGrid { grid-template-columns: 1fr; justify-items: center; }
   .meetingGoalNumbers, .meetingActions { width: 100%; }
   .meetingActions { grid-column: auto; }
-  .meetingChampions { grid-template-columns: 1fr; }
-  .meetingChampions article { min-height: 250px; padding: 25px; }
+  .meetingPodiumGrid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

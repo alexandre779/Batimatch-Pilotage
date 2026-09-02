@@ -1,13 +1,20 @@
 import Image from "next/image";
 import { headers } from "next/headers";
 import { getPilotageAccess } from "@/lib/auth/access";
-import { getDashboardData, type DashboardPeriod } from "@/lib/services/dashboard";
+import { getDashboardData, type DashboardPeriod, type LeaderboardEntry } from "@/lib/services/dashboard";
 import { PresentationControls } from "@/app/components/presentation-controls";
 
 const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("fr-FR");
 const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 0 });
 const VALID_PERIODS = new Set<DashboardPeriod>(["30d", "90d", "year", "all"]);
+
+function MeetingPodium({ title, subtitle, entries, metric }: { title: string; subtitle: string; entries: LeaderboardEntry[]; metric: "count" | "amount" }) {
+  return <article className="meetingPodium"><header><div><p>{title}</p><span>{subtitle}</span></div><b>TOP 3</b></header><ol>
+    {entries.slice(0, 3).map((entry, index) => <li key={entry.id}><span className={`meetingRank meetingRank${index + 1}`}>{index + 1}</span><strong>{entry.name}</strong><div><b>{metric === "count" ? `${entry.count} affaire${entry.count > 1 ? "s" : ""}` : euro.format(entry.amount)}</b><small>{metric === "count" ? euro.format(entry.amount) : `${entry.count} affaire${entry.count > 1 ? "s" : ""}`}</small></div></li>)}
+    {!entries.length && <li className="meetingPodiumEmpty">Aucun résultat sur cette période</li>}
+  </ol></article>;
+}
 
 export default async function PresentationPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
@@ -20,10 +27,9 @@ export default async function PresentationPage({ searchParams }: { searchParams:
   const scope = data.selectedGroupName ?? "Réseau national";
   const firstName = access.name?.split(/[\s-]+/).find(Boolean);
   const goal = data.goalSimulator;
+  const realisticScenario = goal?.scenarios.find((scenario) => scenario.key === "realistic");
   const progress = goal?.target ? Math.min(1, goal.actual / goal.target) : 0;
   const backHref = `/?group=${encodeURIComponent(groupId)}&period=${encodeURIComponent(period)}`;
-  const topDonor = data.leaderboards.donorsByCount[0];
-  const topSigner = data.leaderboards.signersByAmount[0];
 
   return <main className="presentationMode">
     <PresentationControls backHref={backHref} />
@@ -52,15 +58,21 @@ export default async function PresentationPage({ searchParams }: { searchParams:
       <div className="meetingGoalGrid">
         <div className="meetingGoalRing" style={{ background: `conic-gradient(#f18748 ${progress * 360}deg, rgba(255,255,255,.14) 0)` }}><div><strong>{Math.round(progress * 100)}<small>%</small></strong><span>de l’objectif mensuel</span></div></div>
         <div className="meetingGoalNumbers">{goal?.target ? <><div><span>Objectif</span><strong>{euro.format(goal.target)}</strong></div><div><span>Déjà signé ce mois</span><strong>{euro.format(goal.actual)}</strong></div><div><span>Reste à sécuriser</span><strong>{euro.format(goal.remaining)}</strong></div></> : <p>Définissez un objectif mensuel pour activer cette projection.</p>}</div>
-        <div className="meetingActions"><p className="eyebrow">LES ACTIONS DU PRÉSIDENT</p>{data.presidentCoach.length ? <ol>{data.presidentCoach.map((action, index) => <li key={action.id}><span>{index + 1}</span><div><strong>{action.title}</strong><p>{action.impact}</p></div></li>)}</ol> : <div className="meetingAllClear"><strong>Tout est sous contrôle</strong><p>Aucune action urgente n’est détectée.</p></div>}</div>
+        <div className="meetingActions"><p className="eyebrow">NOS ENGAGEMENTS COLLECTIFS</p><ol>
+          <li><span>1</span><div><strong>Prendre en charge les affaires en attente</strong><p>{data.kpis.pendingTreatment ? `${data.kpis.pendingTreatment} affaire${data.kpis.pendingTreatment > 1 ? "s attendent" : " attend"} encore une première action du groupe.` : "Toutes les affaires reçues ont été prises en charge."}</p></div></li>
+          <li><span>2</span><div><strong>Créer de nouvelles opportunités ensemble</strong><p>{realisticScenario ? `Notre cap réaliste est de travailler un volume équivalent à ${realisticScenario.opportunities} nouvelles affaires.` : "Chaque mise en relation contribue à la dynamique collective."}</p></div></li>
+          <li><span>3</span><div><strong>Transformer l’élan en signatures</strong><p>{realisticScenario ? `Objectif collectif : sécuriser ${realisticScenario.wins} signature${realisticScenario.wins > 1 ? "s" : ""} supplémentaire${realisticScenario.wins > 1 ? "s" : ""} ce mois-ci.` : `Continuons à faire progresser les ${data.kpis.openOpportunities} affaires actuellement ouvertes.`}</p></div></li>
+        </ol></div>
       </div>
     </section>
 
     <section className="presentationSlide" id="slide-4">
-      <div className="presentationSlideHeader"><div><p className="eyebrow">03 · TEMPS FORTS</p><h2>Les réussites à célébrer</h2></div><span>Bravo au groupe !</span></div>
-      <div className="meetingChampions">
-        <article><span className="meetingMedal">1</span><p>Top donneur</p><h3>{topDonor?.name ?? "À révéler"}</h3><strong>{topDonor ? `${topDonor.count} affaire${topDonor.count > 1 ? "s" : ""}` : "—"}</strong><small>{topDonor ? euro.format(topDonor.amount) : "Aucune affaire sur la période"}</small></article>
-        <article><span className="meetingMedal">1</span><p>Top signeur</p><h3>{topSigner?.name ?? "À révéler"}</h3><strong>{topSigner ? euro.format(topSigner.amount) : "—"}</strong><small>{topSigner ? `${topSigner.count} affaire${topSigner.count > 1 ? "s" : ""} gagnée${topSigner.count > 1 ? "s" : ""}` : "Aucune signature sur la période"}</small></article>
+      <div className="presentationSlideHeader"><div><p className="eyebrow">03 · TEMPS FORTS</p><h2>Les champions du groupe</h2></div><span>12 places pour célébrer les contributions</span></div>
+      <div className="meetingPodiumGrid">
+        <MeetingPodium title="Top donneurs" subtitle="Nombre d’affaires envoyées" entries={data.leaderboards.donorsByCount} metric="count" />
+        <MeetingPodium title="Top donneurs" subtitle="Montant d’affaires transmis" entries={data.leaderboards.donorsByAmount} metric="amount" />
+        <MeetingPodium title="Top signeurs" subtitle="Nombre d’affaires gagnées" entries={data.leaderboards.signersByCount} metric="count" />
+        <MeetingPodium title="Top signeurs" subtitle="Chiffre d’affaires gagné" entries={data.leaderboards.signersByAmount} metric="amount" />
       </div>
       <div className="meetingClosing"><Image src="/brand/batimatch-mark.png" alt="" width={48} height={48} /><p>Des pros du BTP qui se ressemblent et qui bossent ensemble.</p></div>
     </section>
