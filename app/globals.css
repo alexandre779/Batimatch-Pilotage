@@ -484,7 +484,7 @@ footer { padding: 28px 0 4px; color: var(--muted); font-size: 12px; text-align: 
 .financeRevenueHero span, .financeRevenueHero small { color: rgba(255,255,255,.62); }
 .financeRevenueHero strong { margin: 7px 0; color: var(--accent); font-family: Montserrat,Arial,sans-serif; font-size: clamp(28px,4vw,52px); }
 .financeRevenueHero > div:not(:first-child) strong { color: white; font-size: clamp(22px,3vw,34px); }
-.financeKpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+.financeKpis { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 14px; }
 .financeKpis article { min-height: 150px; padding: 23px; display: flex; flex-direction: column; justify-content: space-between; background: white; border: 1px solid var(--line); border-top: 5px solid var(--accent); border-radius: 16px; }
 .financeKpis article.featured { color: white; background: var(--dark); border-color: var(--dark); }
 .financeKpis span, .financeKpis small { color: var(--muted); }

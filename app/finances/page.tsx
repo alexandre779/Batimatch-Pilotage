@@ -81,15 +81,16 @@ export default async function FinancesPage({ searchParams }: { searchParams: Pro
 
     <section className="financeRevenueHero">
       <div><span>CA généré</span><strong>{euro.format(generatedRevenue)}</strong><small>adhésions + rétributions générées sur la période</small></div>
-      <div><span>Adhésions</span><strong>{euro.format(data.memberships)}</strong><small>{number.format(data.membershipCount)} signature{data.membershipCount > 1 ? "s" : ""}</small></div>
+      <div><span>Adhésions / cotisations</span><strong>{euro.format(data.memberships)}</strong><small>{number.format(data.membershipCount)} cotisation{data.membershipCount > 1 ? "s" : ""}</small></div>
       <div><span>Rétributions</span><strong>{euro.format(data.contributions)}</strong><small>issues des affaires gagnées</small></div>
     </section>
 
     <section className="financeKpis">
+      <article><span>Cotisations à facturer</span><strong>{euro.format(data.membershipsToInvoice)}</strong><small>{number.format(data.membershipsToInvoiceCount)} dossier{data.membershipsToInvoiceCount > 1 ? "s" : ""} « En attente »</small></article>
       <article><span>Rétributions à facturer</span><strong>{euro.format(data.contributionsToInvoice)}</strong><small>statut Airtable « À facturer »</small></article>
       <article><span>Rétributions à encaisser</span><strong>{euro.format(contributionsDue)}</strong><small>{euro.format(data.contributionsPaid)} encaissés</small></article>
       <article><span>Commissions à payer</span><strong>{euro.format(commissionsDue)}</strong><small>{euro.format(data.commissionsPaid)} payés</small></article>
-      <article><span>Solde net à venir</span><strong>{euro.format(contributionsDue - commissionsDue)}</strong><small>rétributions moins commissions</small></article>
+      <article><span>Solde net à venir</span><strong>{euro.format(data.membershipsToInvoice + contributionsDue - commissionsDue)}</strong><small>cotisations et rétributions moins commissions</small></article>
     </section>
 
     <section className="financeAlerts">
@@ -104,6 +105,6 @@ export default async function FinancesPage({ searchParams }: { searchParams: Pro
         {!data.groups.length && <tr><td colSpan={7} className="empty">Aucun mouvement financier sur cette période.</td></tr>}
       </tbody></table></div>
     </section>
-    <p className="financeNote">Le CA généré repose sur les dates de signature. « À facturer » est inclus dans les rétributions restant à encaisser. Les retards sont déterminés avec la date d’échéance Airtable.</p>
+    <p className="financeNote">Les adhésions proviennent de la table Cotisations : les dossiers « En attente » sont à facturer et les dossiers annulés sont exclus. Le montant final Airtable est utilisé en priorité, puis le montant de base ; à défaut, le tarif standard de 400 € est appliqué. « À facturer » est inclus dans les rétributions restant à encaisser.</p>
   </main>;
 }

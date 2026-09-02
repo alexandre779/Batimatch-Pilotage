@@ -9,9 +9,8 @@ export const TABLES = {
   guests: "tbl8Dzf45oVQo5pXu",
   jobs: "tblxApvtIX0roufDJ",
   tickets: "tblcoKk9ELZMfp2pH",
+  contributions: "tblBfPGkfdIo4wkFp",
 } as const;
-
-// Intentionally excluded: "Cotisations ( A SUPPRIMER )" (temporary copy).
 
 export const FIELDS = {
   users: {
@@ -87,5 +86,15 @@ export const FIELDS = {
     signedAt: "fldpnh3lQWNAI4Wws",
     signatureStatus: "fldF7lPIKuJGB6KwJ",
     amount: "fldlfc3OFFwWcE54X"
+  },
+  contributions: {
+    startDate: "fldJU5fv1yplHCFlI",
+    testStartDate: "fldAcmxxGxQDMqXJf",
+    issuedAt: "fldSrTEhK82B82HKT",
+    paidAt: "fldJds5nOpHpXbNTt",
+    status: "fldig8PzxQn06HgMS",
+    group: "fldCu70jgUSzAgYFy",
+    baseAmount: "fldae3OJsSRpr9xnx",
+    finalAmount: "fldreBUtt8zr8T9y6"
   }
 } as const;

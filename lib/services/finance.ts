@@ -18,6 +18,9 @@ export type FinanceGroup = {
 export type FinanceData = {
   memberships: number;
   membershipCount: number;
+  membershipsPaid: number;
+  membershipsToInvoice: number;
+  membershipsToInvoiceCount: number;
   contributions: number;
   contributionsPaid: number;
   contributionsToInvoice: number;
@@ -34,7 +37,12 @@ function text(value: SelectValue) {
   return typeof value === "string" ? value : value?.name ?? "";
 }
 
-function amount(value: unknown) {
+function amount(value: unknown): number {
+  if (Array.isArray(value)) return value.reduce<number>((total, item) => total + amount(item), 0);
+  if (value && typeof value === "object") {
+    const lookup = value as { valuesByLinkedRecordId?: Record<string, unknown[]> };
+    if (lookup.valuesByLinkedRecordId) return Object.values(lookup.valuesByLinkedRecordId).flat().reduce<number>((total, item) => total + amount(item), 0);
+  }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 }
@@ -69,28 +77,35 @@ function linkedGroup(value: unknown) {
 }
 
 export async function getFinanceData(range: { start: Date | null; end: Date | null }): Promise<FinanceData> {
-  const mf = FIELDS.memberships;
+  const cf = FIELDS.contributions;
   const of = FIELDS.opportunities;
-  const [memberships, opportunities] = await Promise.all([
-    listRecords(TABLES.memberships, [mf.group, mf.signedAt, mf.signatureStatus, mf.amount]),
-    listRecords(TABLES.opportunities, [of.stage, of.signedAt, of.dueAt, of.contribution, of.commission, of.contributionStatus, of.commissionStatus, of.receiverGroup])
+  const gf = FIELDS.groups;
+  const [memberships, opportunities, groups] = await Promise.all([
+    listRecords(TABLES.contributions, [cf.startDate, cf.testStartDate, cf.issuedAt, cf.paidAt, cf.status, cf.group, cf.baseAmount, cf.finalAmount]),
+    listRecords(TABLES.opportunities, [of.stage, of.signedAt, of.dueAt, of.contribution, of.commission, of.contributionStatus, of.commissionStatus, of.receiverGroup]),
+    listRecords(TABLES.groups, [gf.name])
   ]);
 
+  const groupNames = new Map(groups.map((record) => [record.id, String(record.fields[gf.name] ?? record.id)]));
   const groupMap = new Map<string, FinanceGroup>();
   const groupRow = (group: { id: string; name: string } | null) => {
     const key = group?.id ?? "unassigned";
-    if (!groupMap.has(key)) groupMap.set(key, { id: key, name: group?.name ?? "Groupe non renseigné", memberships: 0, membershipCount: 0, contributions: 0, contributionsPaid: 0, commissions: 0, commissionsPaid: 0 });
+    const resolvedName = key === "unassigned" ? "Groupe non renseigné" : groupNames.get(key) ?? group?.name ?? key;
+    if (!groupMap.has(key)) groupMap.set(key, { id: key, name: resolvedName, memberships: 0, membershipCount: 0, contributions: 0, contributionsPaid: 0, commissions: 0, commissionsPaid: 0 });
     return groupMap.get(key)!;
   };
 
-  let membershipTotal = 0;
-  let membershipCount = 0;
+  let membershipTotal = 0, membershipCount = 0, membershipsPaid = 0, membershipsToInvoice = 0, membershipsToInvoiceCount = 0;
   for (const record of memberships) {
-    if (!/^sign[eé]$/i.test(text(record.fields[mf.signatureStatus] as SelectValue)) || !inRange(record.fields[mf.signedAt], range.start, range.end)) continue;
-    const value = amount(record.fields[mf.amount]);
+    const status = text(record.fields[cf.status] as SelectValue);
+    const accountingDate = record.fields[cf.issuedAt] ?? record.fields[cf.startDate] ?? record.fields[cf.testStartDate] ?? record.createdTime;
+    if (/annul/i.test(status) || !inRange(accountingDate, range.start, range.end)) continue;
+    const value = amount(record.fields[cf.finalAmount]) || amount(record.fields[cf.baseAmount]) || 400;
     membershipTotal += value;
     membershipCount += 1;
-    const row = groupRow(linkedGroup(record.fields[mf.group]));
+    if (/pay[eé]e?/i.test(status)) membershipsPaid += value;
+    if (/attente/i.test(status)) { membershipsToInvoice += value; membershipsToInvoiceCount += 1; }
+    const row = groupRow(linkedGroup(record.fields[cf.group]));
     row.memberships += value;
     row.membershipCount += 1;
   }
@@ -120,5 +135,5 @@ export async function getFinanceData(range: { start: Date | null; end: Date | nu
     if (commissionPaid) row.commissionsPaid += commission;
   }
 
-  return { memberships: membershipTotal, membershipCount, contributions, contributionsPaid, contributionsToInvoice, commissions, commissionsPaid, overdueContributions, overdueContributionCount, overdueCommissions, overdueCommissionCount, groups: [...groupMap.values()].sort((a, b) => b.contributions - a.contributions) };
+  return { memberships: membershipTotal, membershipCount, membershipsPaid, membershipsToInvoice, membershipsToInvoiceCount, contributions, contributionsPaid, contributionsToInvoice, commissions, commissionsPaid, overdueContributions, overdueContributionCount, overdueCommissions, overdueCommissionCount, groups: [...groupMap.values()].sort((a, b) => b.contributions - a.contributions) };
 }
